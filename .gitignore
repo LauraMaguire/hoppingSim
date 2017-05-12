@@ -1,0 +1,20 @@
+# Temporary files
+*.swp
+*~
+
+# Input parameters
+initParamsExample.m
+
+# Directories
+output/
+
+# Outputs, logs, etc.
+*.avi
+*.mat
+*.txt
+*.log
+*.out
+*.fig
+*.jpg
+*.png
+
