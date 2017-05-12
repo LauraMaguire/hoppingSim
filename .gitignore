@@ -4,6 +4,7 @@
 
 # Input parameters
 initParamsExample.m
+Params.mat
 
 # Directories
 output/
