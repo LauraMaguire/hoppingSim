@@ -16,7 +16,7 @@ try
   param = struct();
   
   %make output directories if they don't exist
-  if exist('./output','dir') == 0; mkdir('./output') ;end;
+  if exist('./output','dir') == 0; mkdir('./output') ;end
   
   %load params. check if it exists, if not, run it, then delete it
   %initparams on tracked, so make it if it's not there
@@ -24,7 +24,7 @@ try
     if exist('initParamExample.m','file') == 0
       cpmatparams
     end
-    initParamsExample
+    initParamExample
   end
   load Params.mat;
   
@@ -91,6 +91,7 @@ try
   fprintf('RunTime: %.2d:%.2d:%.2d (hr:min:sec)\n', runHr, runMin,runSec);
   EndTime = datestr(now);
   fprintf('Completed run: %s\n',EndTime);
+  movefile('Params.mat','ParamsFinished.mat')
 catch err
   fprintf('%s',err.getReport('extended') );
   keyboard
