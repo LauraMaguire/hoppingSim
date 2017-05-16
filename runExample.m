@@ -32,8 +32,9 @@ try
   fprintf('parameters read in\n');
   disp(param);
   
-  %build a parameter matrix
-  param_mat = combvec( param.a, param.b );
+  %build a parameter matrix - I think these are the ones that get varies
+  %param_mat = combvec( param.a, param.b );
+  param_mat = combvec( param.Kd, param.b );
   [~,nparams] = size(param_mat);
   
   % For some reason, param_mat gets "sliced". Create vectors to get arround
