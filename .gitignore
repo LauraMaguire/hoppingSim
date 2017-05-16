@@ -1,9 +1,11 @@
 # Temporary files
 *.swp
 *~
-
+# Matlab autosave files
+*.asv
 # Input parameters
 initParamsExample.m
+initParams.m
 Params.mat
 
 # Directories
@@ -18,4 +20,3 @@ output/
 *.fig
 *.jpg
 *.png
-
