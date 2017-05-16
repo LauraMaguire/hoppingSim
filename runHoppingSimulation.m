@@ -89,15 +89,35 @@ try
     all_x_output = zeros(paramTemp.runs,paramTemp.timesteps+1,2);
 
     % Loop over all runs.
-    for i=1:paramTemp.runs
+    parfor i=1:paramTemp.runs
         % Run hopping simulation and store results.
         % tether_locs is an array giving the tether location for each tether.
-    [ all_x_output(i,:,:), ~] = NumericalHoppingTether( paramTemp, plot_flag );
+        [ all_x_output(i,:,:), ~] = NumericalHoppingTether( paramTemp, plot_flag );
     end
-    % do average
-    average = mean( all_x_output );
+    % Process the results.
+    % Re-format x-array so that Mike's MSD calculator can use it.
+    xx=zeros(1,paramTemp.runs,paramTemp.timesteps+1);
+    for i=1:paramTemp.runs
+        xx(1,i,:) = all_x_output(i,:,1);
+    end
+
+    % Initialize the msd-array.
+    %   Dimension 1 is the MSD.
+    %   Dimension 2 is the standard deviation of the MSD.
+    %   Dimension 3 is the number of intervals used in the calculation.
+    msd = zeros(paramTemp.runs, paramTemp.timesteps,3);
+    
+    timesteps = paramTemp.timesteps;
+    % Call the MSD computer.
+    parfor i=1:paramTemp.runs
+        [msd(i,:,:),~] = computeMSD(xx(1,i,:), min(1e5,timesteps), 0, 1);
+    end
+    % Take the mean MSD over all runs.
+    meanMSD = mean(squeeze(msd(:,:,1)),1);
+    
+    % Save the important results in a .mat file in output directory.
     fileObj = matfile(filename,'Writable',true);
-    fileObj.average = average;
+    fileObj.meanMSD = meanMSD;
     fileObj.param = param;
     fileObj.paramTemp = paramTemp;
     movefile(filename,'./output');
