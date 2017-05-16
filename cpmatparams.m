@@ -1,2 +1,2 @@
 % copy initParamExample if it doesnt exist
-copyfile('./src/initParamExampleTmpl.m','./initParamExample.m');
+copyfile('./src/initParamTmpl.m','./initParam.m');
