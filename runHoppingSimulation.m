@@ -114,10 +114,13 @@ try
     end
     % Take the mean MSD over all runs.
     meanMSD = mean(squeeze(msd(:,:,1)),1);
+    meanErr = mean(squeeze(msd(:,:,2)),1);
     
     % Save the important results in a .mat file in output directory.
     fileObj = matfile(filename,'Writable',true);
     fileObj.meanMSD = meanMSD;
+    fileObj.meanErr = meanErr;
+    fileObj. dtime = 1:timesteps;
     fileObj.param = param;
     fileObj.paramTemp = paramTemp;
     movefile(filename,'./output');

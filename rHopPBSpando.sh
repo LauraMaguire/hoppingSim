@@ -67,7 +67,7 @@ module load matlab_R2015b
 
 # Run matlab program
 matlab -nodesktop -nosplash \
-  -r  "try, runExample, catch, exit(1), end, exit(0);" \
+  -r  "try, runHoppingSimulation, catch, exit(1), end, exit(0);" \
   2>&1 | tee ${PBS_JOBNAME}.out
 echo "Finished. Matlab exit code: $?" 
 echo Time is `date`

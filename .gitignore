@@ -5,7 +5,7 @@
 *.asv
 # Input parameters
 initParamsExample.m
-initParams.m
+initParam.m
 Params.mat
 
 # Directories
