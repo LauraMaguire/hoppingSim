@@ -122,9 +122,9 @@ try
     fileObj.meanMSD = meanMSD;
     fileObj.meanErr = meanErr;
     fileObj.dtime = 1:timesteps;
-    fileObj.Deff = meanMSD(1:end/2)./dtime(1:end/2);
-    fileObj.Derr = meanErr(1:end/2)./dtime(1:end/2);
-    fileObj.t = dtime(1:end/2);
+    fileObj.t = 1:timesteps/2;
+    fileObj.Deff = meanMSD(1:end/2)./t;
+    fileObj.Derr = meanErr(1:end/2)./t;
     fileObj.param = param;
     fileObj.paramTemp = paramTemp;
     movefile(filename,'./output');
