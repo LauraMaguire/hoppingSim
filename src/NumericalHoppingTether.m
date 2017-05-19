@@ -33,11 +33,11 @@ else
 end
 
 % Make a tether vector with evenly spaced tethers
-spacing = round(1/Kd10.paramTemp.c);
+spacing = round(1/c);
 % Slightly adjust the total number of lattice sites to make the tether
 % spacing fit neatly
-remainder = mod(Kd10.paramTemp.N,spacing);
-Nadj = Kd10.paramTemp.N-remainder;
+remainder = mod(N,spacing);
+Nadj = N-remainder;
 M = Nadj/spacing;
 
 % Make the tether locations vector.
