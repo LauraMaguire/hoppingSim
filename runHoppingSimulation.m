@@ -4,6 +4,18 @@
 % doesn't exist yet, sets up parallelization, and moves outputs
 %
 
+% Problems: higher values of Kd lead to increasing superdiffusive behavior.
+%  Effective diffusion coefficient isn't what I expect in any cases.
+%  Already fixed problem with wrapdistance, which didn't fix the
+%  superdiffusive issue.
+
+% Things to try: Run no-binding, no-hopping case on Pando (can decrease
+% on-rate by a lot, or increase off-rate by a lot, or both) and see what
+% happens.  Look at change between 10 uM and 100 uM cases and look for
+% spots in code that depend on Kd or koff.  Check again that average
+% particle energy is what it should be.  Make sure my tether location
+% creator is working properly.
+
 function runHoppingSimulation()
 try
   addpath('./src');

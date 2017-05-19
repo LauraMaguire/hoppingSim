@@ -32,15 +32,22 @@ else
     plot_flag = 1;
 end
 
-% some algebra
-M = round(N*c); % Number of tether attachment sites.
-% tether_locations = sort(randi(N,M,1));
-spacing = round(1/c);
+% Make a tether vector with evenly spaced tethers
+spacing = round(1/Kd10.paramTemp.c);
+% Slightly adjust the total number of lattice sites to make the tether
+% spacing fit neatly
+remainder = mod(Kd10.paramTemp.N,spacing);
+Nadj = Kd10.paramTemp.N-remainder;
+M = Nadj/spacing;
+
+% Make the tether locations vector.
 tether_locations = zeros(1,M);
 for i=1:M
     tether_locations(i) = spacing*(i-1)+1;
 end
 
+% Reset the total number of lattice sites.
+N = Nadj;
 
 
 % Some checks
