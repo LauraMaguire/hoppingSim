@@ -7,14 +7,14 @@
 % Problems: higher values of Kd lead to increasing superdiffusive behavior.
 %  Effective diffusion coefficient isn't what I expect in any cases.
 %  Already fixed problem with wrapdistance, which didn't fix the
-%  superdiffusive issue.
+%  superdiffusive issue.  Also fixed issue with tether locations.  Emailed
+%  Mike about random number generation.
 
 % Things to try: Run no-binding, no-hopping case on Pando (can decrease
 % on-rate by a lot, or increase off-rate by a lot, or both) and see what
 % happens.  Look at change between 10 uM and 100 uM cases and look for
 % spots in code that depend on Kd or koff.  Check again that average
-% particle energy is what it should be.  Make sure my tether location
-% creator is working properly.
+% particle energy is what it should be.  
 
 function runHoppingSimulation()
 try
@@ -103,6 +103,9 @@ try
 
     % Loop over all runs.
     parfor i=1:paramTemp.runs
+        pause(i);
+        rng('shuffle');
+        fprintf('for i = %d Rand num = %f \n', ii, rand() );
         % Run hopping simulation and store results.
         % tether_locs is an array giving the tether location for each tether.
         [ all_x_output(i,:,:), ~] = NumericalHoppingTether( paramTemp, plot_flag );
