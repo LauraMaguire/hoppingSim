@@ -60,7 +60,7 @@ try
   % loop over parameters
   for ii=1:nparams
     % scramble rng in parfor! It's rng is indepedent on ML's current state
-    pause(ii);
+    pause(ii); % pause for ii seconds
     rng('shuffle');
     fprintf('for ii = %d Rand num = %f \n', ii, rand() );
     
@@ -103,7 +103,7 @@ try
 
     % Loop over all runs.
     parfor i=1:paramTemp.runs
-        pause(i);
+        pause(i/100); % pause for i/100 seconds
         rng('shuffle');
         fprintf('for i = %d Rand num = %f \n', ii, rand() );
         % Run hopping simulation and store results.
