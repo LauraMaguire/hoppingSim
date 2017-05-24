@@ -4,17 +4,30 @@
 % doesn't exist yet, sets up parallelization, and moves outputs
 %
 
-% Problems: higher values of Kd lead to increasing superdiffusive behavior.
-%  Effective diffusion coefficient isn't what I expect in any cases.
-%  Already fixed problem with wrapdistance, which didn't fix the
-%  superdiffusive issue.  Also fixed issue with tether locations.  Emailed
-%  Mike about random number generation.
+% Current problems:
+% The script to find horizontal asymptotes doesn't work.
+% Higher values of Kd lead to increasingly bad superdiffusive behavior.
+% Effective diffusion coefficient is wrong.
 
-% Things to try: Run no-binding, no-hopping case on Pando (can decrease
-% on-rate by a lot, or increase off-rate by a lot, or both) and see what
-% happens.  Look at change between 10 uM and 100 uM cases and look for
-% spots in code that depend on Kd or koff.  Check again that average
-% particle energy is what it should be.  
+% Things I've fixed/tried:
+% Changed random number generation to fix problem with noise.  Difficult to
+% check - will look out for issue in the future.
+% Fixed wrapdistance error and tested.
+% Fixed tether location error and tested.
+% Checked that Deff = 1 for no-hopping, no-binding case.
+
+% Things to try: 
+% Look at change between 10 uM and 100 uM cases and look for spots in code 
+% that depend on Kd or koff.  
+%   - fraction of time bound increases with decreasing Kd, so free D should
+%   have higher weight at Kd increases - not what I see happening.
+%   - Kd shows up in Ef and therefore also in the binding rate, which is
+%   always 1.
+% Check again that average particle energy is what it should be.
+% Look through NumericalHoppingTether for places that could "kick" the
+% particle.
+% Look at 10 mM or 100 mM Kd - limiting cases aren't matching with trends
+% in behavior.
 
 function runHoppingSimulation()
 try
@@ -73,6 +86,9 @@ try
     paramTemp.Kd = paramTemp.koff/paramTemp.kon; % in uM
     paramTemp.Df = paramTemp.a^2/paramTemp.tau; % in nm^2/s
     paramTemp.pf = (1+paramTemp.Nt/paramTemp.Kd)^(-1); % free probability
+    paramTemp.Db_theo = paramTemp.Df*paramTemp.koff*paramTemp.lc*paramTemp.lp/...
+        (paramTemp.koff*paramTemp.lc*paramTemp.lp + 3*paramTemp.Df); % theoretical bound diffusion coefficient
+    paramTemp.Deff_theo = paramTemp.pf*paramTemp.Df + (1-paramTemp.pf)*paramTemp.Db_theo; % theoretical effective diffusion
     
     paramTemp.c = paramTemp.a*(paramTemp.Nt*1e-6/1.66)^(1/3); % fraction of lattice sites with tether attachment point
     paramTemp.k = (3*paramTemp.a^2)/(2*paramTemp.lc*paramTemp.lp); % n.d. spring constant
@@ -105,7 +121,7 @@ try
     parfor i=1:paramTemp.runs
         pause(i/100); % pause for i/100 seconds
         rng('shuffle');
-        fprintf('for i = %d Rand num = %f \n', ii, rand() );
+        %fprintf('for i = %d Rand num = %f \n', ii, rand() );
         % Run hopping simulation and store results.
         % tether_locs is an array giving the tether location for each tether.
         [ all_x_output(i,:,:), ~] = NumericalHoppingTether( paramTemp, plot_flag );
@@ -142,7 +158,7 @@ try
     fileObj.Derr = meanErr(1:end/2)./fileObj.t;
     fileObj.param = param;
     fileObj.paramTemp = paramTemp;
-    movefile(filename,'./output');
+    movefile(filename,'./output'); %why is this giving an error?
   end
   runTime = toc(RunTimeID);
   runHr = floor( runTime / 3600); runTime = runTime - runHr*3600;

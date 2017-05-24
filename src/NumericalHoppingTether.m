@@ -69,16 +69,17 @@ end
 % unbound.
 x = zeros(timesteps,2);
 x(1,:) = [N/2 0]; % start at the center.
+
 for i=1:timesteps
     staterrand = rand;    
-    % First do state changes
-    if x(i,2) ~= 0 % currently bound
+    % Check for binding/unbinding state changes
+    if x(i,2) ~= 0 % enter this loop is the particle is currently bound
         % LM: wrapdistance calculates how far particle is from center of
         % well, taking periodic boundary conditions into account.
         % energy_current = energy at current time
         energy_current = 0.5*k*(wrapdistance(x(i,1),tether_locations(x(i,2)),N))^2; % calculate the energy in this tether
         %disp(['Step ' num2str(i) ', tethered now, staterrand = ' num2str(staterrand)]);
-        if staterrand < hop_probability; % attempt a hop
+        if staterrand < hop_probability; % enter this loop if attempting a hop
             %disp(['R = ' num2str(staterrand) ', hp = ' num2str(hop_probability) ' , attempting hop']);
             % find the closest adjacent tether Could also randomly pick
             % right or left?  Would it be faster to call wrap only once and
@@ -101,7 +102,7 @@ for i=1:timesteps
                 x(i+1,2) = x(i,2);
             end
             
-        elseif staterrand < hop_probability + binding_rate % attempt unbind
+        elseif staterrand < hop_probability + binding_rate % enter this loop if attempting to unbind
             %disp(['R = ' num2str(staterrand) ', hp+br = ' num2str(hop_probability+binding_rate) ' , attempting to unbind']);
             delta_energy = binding_energy-energy_current;
             %disp(['Delta energy is ' num2str(delta_energy)]);
@@ -118,7 +119,10 @@ for i=1:timesteps
         else % if you don't try to hop or unbind, remain bound to the same tether
             x(i+1,2) = x(i,2);
         end
-    else % not currently bound, always attempt to bind to the nearest possible state
+        
+        
+        
+    else % particle is unbound.  This loop attempts binding.
         if staterrand < binding_rate
             [mindistance, index] = min(wrapdistance(tether_locations,x(i,1),N)); % finds closest tether
             %accept with probability that depends on the binding energy
@@ -137,7 +141,9 @@ for i=1:timesteps
         end
         
     end
-    % find the test position that you'll move to
+    
+    
+    % Done with state changes - now deal with diffusion
     if rand < right_probability % attempt move to the right.
         test_position = x(i,1)+1;
     else % or to the left.
