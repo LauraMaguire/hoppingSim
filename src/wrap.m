@@ -4,11 +4,13 @@ function [ xout ] = wrap( xin,N )
 %           total number of gridpoints = N
 % output = new x
 
-xtemp = mod(xin,N);
-if xtemp==0
-    xout=N;
-else 
-    xout=xtemp;
+for j=1:length(xin)
+    xtemp = mod(xin(j),N);
+    if xtemp==0
+        xout=N;
+    else 
+        xout(j)=xtemp;
+    end
 end
 
 end

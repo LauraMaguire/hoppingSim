@@ -1,4 +1,4 @@
-function [ x, tether_locations ] = NumericalHoppingTether( params, plot_flag )
+function [ x, tether_locations] = NumericalHoppingTether( params, plot_flag )
 % To run: [x, tether_locations] = NumericalHoppingTether;
 
 % To do:
@@ -86,9 +86,12 @@ for i=1:timesteps
             % have another variable?
             test_tethers = [wrapdistance(tether_locations(wrap(x(i,2)+1,M)),x(i,1), N), wrap(x(i,2)+1,M); ...
                             wrapdistance(tether_locations(wrap(x(i,2)-1,M)),x(i,1), N), wrap(x(i,2)-1,M)];
-            [mindistance, test_index] = min(test_tethers(:,1));
-            index = test_tethers(test_index,2);
-            
+            testDist = min(test_tethers(:,1));
+            minDist = min(testDist);
+            testIndex = find(testDist==minDist);
+            index = datasample(testIndex,1);
+%             [mindistance, test_index] = min(test_tethers(:,1));
+%             index = test_tethers(test_index,2);
             %energy if you were attached to the closest adjacent teather
             % LM: Calculate the particle's energy if it were attached to
             % its nearest-neighbor tether instead of its current tether
@@ -124,7 +127,12 @@ for i=1:timesteps
         
     else % particle is unbound.  This loop attempts binding.
         if staterrand < binding_rate
-            [mindistance, index] = min(wrapdistance(tether_locations,x(i,1),N)); % finds closest tether
+            %[mindistance, index] = min(wrapdistance(tether_locations,x(i,1),N)); % finds closest tether
+            distList = wrapdistance(tether_locations,x(i,1),N);
+            mindistance = min(distList); % finds closest tether 
+            minIndexList = find(distList==mindistance);
+            index = datasample(minIndexList,1); % randomly choose one index
+
             %accept with probability that depends on the binding energy
              %check the potential energy of the current location
             energy_nearest = 0.5*k*(mindistance)^2;
@@ -156,7 +164,7 @@ for i=1:timesteps
         %check the potential energy of the current location
         % note, the state has already changed, so the tether_location is
         % x(i+1,2), the position is changed here, so x(i,1)
-        energy_current = 0.5*k*wrapdistance(x(i,1), tether_locations(x(i+1,2)), N)^2;
+        energy_current = 0.5*k*wrapdistance(x(i,1),tether_locations(x(i+1,2)), N)^2;
         %and the energy of the test position
         energy_test_position = 0.5*k*wrapdistance(test_position, tether_locations(x(i+1,2)), N)^2;
         delta_energy = energy_test_position - energy_current;
@@ -175,16 +183,18 @@ end
 
 if plot_flag
     close all
-    plot_time = min(10^6, timesteps); %only plot of subset for long runs.
-    histogram(x(1:plot_time,2))
+    subplot(2,2,1)
+    plot_time = timesteps;% min(10^6, timesteps); %only plot of subset for long runs.
+    histogram(nonzeros(x(1:plot_time,2)))
     title('tether locations')
-    figure
+    subplot(2,2,2)
     plot(x(1:plot_time,1))
     title('position vs time')
-    figure
-    plot(x(1:plot_time,2))
+    subplot(2,2,4)
+    plot(nonzeros(x(1:plot_time,2)))
     title('tether locations vs time')
-    histogram(x(1:plot_time,1), 100)
+    subplot(2,2,3)
+    histfit(x(1:plot_time,1), 100)
     title('histogram of locations')
 end
 

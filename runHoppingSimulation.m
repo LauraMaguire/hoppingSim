@@ -6,7 +6,6 @@
 
 % Current problems:
 % The script to find horizontal asymptotes doesn't work.
-% Higher values of Kd lead to increasingly bad superdiffusive behavior.
 % Effective diffusion coefficient is wrong.
 
 % Things I've fixed/tried:
@@ -15,6 +14,8 @@
 % Fixed wrapdistance error and tested.
 % Fixed tether location error and tested.
 % Checked that Deff = 1 for no-hopping, no-binding case.
+% Fixed error leading to superdiffusive behavior - now randomly picks
+% between two equidistant tethers.
 
 % Things to try: 
 % Look at change between 10 uM and 100 uM cases and look for spots in code 
@@ -24,10 +25,7 @@
 %   - Kd shows up in Ef and therefore also in the binding rate, which is
 %   always 1.
 % Check again that average particle energy is what it should be.
-% Look through NumericalHoppingTether for places that could "kick" the
-% particle.
-% Look at 10 mM or 100 mM Kd - limiting cases aren't matching with trends
-% in behavior.
+
 
 function runHoppingSimulation()
 try
@@ -129,8 +127,10 @@ try
     % Process the results.
     % Re-format x-array so that Mike's MSD calculator can use it.
     xx=zeros(1,paramTemp.runs,paramTemp.timesteps+1);
+    lr = zeros(1,paramTemp.runs);
     for i=1:paramTemp.runs
         xx(1,i,:) = all_x_output(i,:,1);
+        lr(i) = sign(xx(1,i,1)-xx(1,i,end));
     end
 
     % Initialize the msd-array.
@@ -158,6 +158,7 @@ try
     fileObj.Derr = meanErr(1:end/2)./fileObj.t;
     fileObj.param = param;
     fileObj.paramTemp = paramTemp;
+    fileObj.lr = lr;
     movefile(filename,'./output'); %why is this giving an error?
   end
   runTime = toc(RunTimeID);
