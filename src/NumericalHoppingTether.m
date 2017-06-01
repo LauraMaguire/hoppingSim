@@ -151,7 +151,7 @@ for i=1:timesteps
                 disp(['Binding. tether location is ' num2str(x(i+1,2))]);
             elseif  rand < exp(-delta_energy) % accept moves to higher energy with probability e^-energy;
                 x(i+1,2) = index;
-                disp(['Binding. tether location is ' num2str(x(i+1,2))]);
+                %disp(['Binding. tether location is ' num2str(x(i+1,2))]);
             else % rejected the move, so stay where you are
                 x(i+1,2) = x(i,2);
             end
