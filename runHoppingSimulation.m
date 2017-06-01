@@ -128,7 +128,7 @@ try
     eCurrent = zeros(paramTemp.runs, paramTemp.timesteps);
     distList = zeros(paramTemp.runs, paramTemp.timesteps);
     % Loop over all runs.
-    for i=1:paramTemp.runs
+    parfor i=1:paramTemp.runs
         pause(i/100); % pause for i/100 seconds
         rng('shuffle');
         %fprintf('for i = %d Rand num = %f \n', ii, rand() );
