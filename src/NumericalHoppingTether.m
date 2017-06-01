@@ -1,4 +1,5 @@
-function [ x, tether_locations] = NumericalHoppingTether( params, plot_flag )
+function [ x, tether_locations, Ecurrent,distances] = NumericalHoppingTether( params, plot_flag )
+try
 % To run: [x, tether_locations] = NumericalHoppingTether;
 
 % To do:
@@ -69,17 +70,22 @@ end
 % unbound.
 x = zeros(timesteps,2);
 x(1,:) = [N/2 0]; % start at the center.
+Ecurrent = zeros(timesteps,1); % can remove when lifetime problem is solved
+distances = zeros(timesteps,1);
 
 for i=1:timesteps
-    staterrand = rand;    
+    staterand = rand;    
     % Check for binding/unbinding state changes
     if x(i,2) ~= 0 % enter this loop is the particle is currently bound
         % LM: wrapdistance calculates how far particle is from center of
         % well, taking periodic boundary conditions into account.
         % energy_current = energy at current time
-        energy_current = 0.5*k*(wrapdistance(x(i,1),tether_locations(x(i,2)),N))^2; % calculate the energy in this tether
+        dist = (wrapdistance(x(i,1),tether_locations(x(i,2)),N));
+        distances(i) = dist;
+        energy_current = 0.5*k*dist^2; % calculate the energy in this tether
+        %energy_current = 0.5*k*abs(x(i,1)-tether_locations(x(i,2)))^2; % energy, nothing fancy with wrapping
         %disp(['Step ' num2str(i) ', tethered now, staterrand = ' num2str(staterrand)]);
-        if staterrand < hop_probability; % enter this loop if attempting a hop
+        if staterand < hop_probability; % enter this loop if attempting a hop
             %disp(['R = ' num2str(staterrand) ', hp = ' num2str(hop_probability) ' , attempting hop']);
             % find the closest adjacent tether Could also randomly pick
             % right or left?  Would it be faster to call wrap only once and
@@ -105,28 +111,31 @@ for i=1:timesteps
                 x(i+1,2) = x(i,2);
             end
             
-        elseif staterrand < hop_probability + binding_rate % enter this loop if attempting to unbind
+        elseif staterand < hop_probability + binding_rate % enter this loop if attempting to unbind
             %disp(['R = ' num2str(staterrand) ', hp+br = ' num2str(hop_probability+binding_rate) ' , attempting to unbind']);
             delta_energy = binding_energy-energy_current;
+            Ecurrent(i) = energy_current; % can remove when lifetime problem is solved
             %disp(['Delta energy is ' num2str(delta_energy)]);
+            unbindingRand = rand;
             if delta_energy < 0 % always accept move if it would decrease energy
                 x(i+1,2) = 0; % move to unbound state
                 %disp('DE < 0, unbinding!')
-            elseif  rand < exp(-delta_energy) % accept moves to higher energy with probability e^-energy;
+            elseif  unbindingRand < exp(-delta_energy) % accept moves to higher energy with probability e^-energy;
                 x(i+1,2) = 0;  % move to unbound state
-                %disp(['R = ' num2str(rand) '. Higher energy, but still unbinding!'])
+                %disp(['R = ' num2str(unbindingRand) '. exp(-Delta E) = ' num2str(exp(-delta_energy)) ' Unbinding!'])
             else % rejected the move, so stay where you are
                 x(i+1,2) = x(i,2);
-                %disp(['R = ' num2str(rand) '. Staying bound!'])
+                %disp(['R = ' num2str(unbindingRand) '. exp(-Delta E) = ' num2str(exp(-delta_energy)) '. Staying bound!'])
             end
         else % if you don't try to hop or unbind, remain bound to the same tether
             x(i+1,2) = x(i,2);
+            %disp('staying bound to same tether');
         end
         
         
         
-    else % particle is unbound.  This loop attempts binding.
-        if staterrand < binding_rate
+    elseif x(i,2)==0 % particle is unbound.  This loop attempts binding.
+        if staterand < binding_rate
             %[mindistance, index] = min(wrapdistance(tether_locations,x(i,1),N)); % finds closest tether
             distList = wrapdistance(tether_locations,x(i,1),N);
             mindistance = min(distList); % finds closest tether 
@@ -139,8 +148,10 @@ for i=1:timesteps
             delta_energy = energy_nearest - binding_energy;
             if delta_energy < 0 % always go down in energy
                 x(i+1,2) = index;
+                disp(['Binding. tether location is ' num2str(x(i+1,2))]);
             elseif  rand < exp(-delta_energy) % accept moves to higher energy with probability e^-energy;
                 x(i+1,2) = index;
+                disp(['Binding. tether location is ' num2str(x(i+1,2))]);
             else % rejected the move, so stay where you are
                 x(i+1,2) = x(i,2);
             end
@@ -197,7 +208,9 @@ if plot_flag
     histfit(x(1:plot_time,1), 100)
     title('histogram of locations')
 end
-
+catch err
+  fprintf('%s',err.getReport('extended') );
+  keyboard
 end
 
 

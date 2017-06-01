@@ -7,6 +7,11 @@
 % Current problems:
 % The script to find horizontal asymptotes doesn't work.
 % Effective diffusion coefficient is wrong.
+% Average bound lifetime is wrong (80 when it should be 100, 580 when it
+% should be 1000).
+% Actual simulated bound particle energy doesn't match the predicted value,
+% and the mean distance from the tether's center is too large.  Hopefully
+% fixing this problem will fix the two above problems as well.
 
 % Things I've fixed/tried:
 % Changed random number generation to fix problem with noise.  Difficult to
@@ -16,15 +21,16 @@
 % Checked that Deff = 1 for no-hopping, no-binding case.
 % Fixed error leading to superdiffusive behavior - now randomly picks
 % between two equidistant tethers.
+% Average particle energy is very close when calculated two different ways.
+% Differences are probably due to discrete vs continuous calculations.
+% Changed limits of integration on stat mech calculation.
+% Wrote a function to calculate Zb and Eb numerically.
 
 % Things to try: 
-% Look at change between 10 uM and 100 uM cases and look for spots in code 
-% that depend on Kd or koff.  
-%   - fraction of time bound increases with decreasing Kd, so free D should
-%   have higher weight at Kd increases - not what I see happening.
-%   - Kd shows up in Ef and therefore also in the binding rate, which is
-%   always 1.
-% Check again that average particle energy is what it should be.
+% Run through conversion scheme carefully.
+% Think physically about why Eb is coming up as 1/2 all the time.
+% Check that eCurrent calculator is working properly.
+% Redo entire analytical calculation in Matlab to eliminate algebra errors.
 
 
 function runHoppingSimulation()
@@ -90,12 +96,16 @@ try
     
     paramTemp.c = paramTemp.a*(paramTemp.Nt*1e-6/1.66)^(1/3); % fraction of lattice sites with tether attachment point
     paramTemp.k = (3*paramTemp.a^2)/(2*paramTemp.lc*paramTemp.lp); % n.d. spring constant
-    paramTemp.nu = sqrt(pi/(2*paramTemp.k))*erf((1/(2*paramTemp.c))*sqrt(paramTemp.k/2)); % handy constant
+    %paramTemp.nu = sqrt(pi/(2*paramTemp.k))*erf((1/(2*paramTemp.c))*sqrt(paramTemp.k/2)); % handy constant
+    paramTemp.nu = sqrt(2*pi/(paramTemp.k)); % handy constant
     paramTemp.Ef = -log((2*paramTemp.c*paramTemp.Kd/paramTemp.Nt)*paramTemp.nu); % n.d. energy of a free particle (divided by thermal energy)
-    paramTemp.Eb = (1./(2.*paramTemp.c.*paramTemp.nu)).*(paramTemp.c.*paramTemp.nu-exp(-paramTemp.k./(8.*paramTemp.c.^2))./2); % n.d. avg. energy of a bound particle
+    %paramTemp.Eb = (1./(2.*paramTemp.c.*paramTemp.nu)).*(paramTemp.c.*paramTemp.nu-exp(-paramTemp.k./(8.*paramTemp.c.^2))./2); % n.d. avg. energy of a bound particle
+    paramTemp.Eb = 0.5;
     paramTemp.Zf = paramTemp.N.*exp(-paramTemp.Ef); % free partition function
-    paramTemp.Zb = 2.*paramTemp.N.*paramTemp.c.*paramTemp.nu; % bound partition function
+    paramTemp.Zb = paramTemp.N.*paramTemp.c.*paramTemp.nu; % bound partition function
+    
     paramTemp.Z = paramTemp.Zf+paramTemp.Zb; % total partition function
+    
     paramTemp.binding_energy = paramTemp.Ef;
     paramTemp.binding_rate = paramTemp.koff.*paramTemp.tau.*exp(paramTemp.Ef-paramTemp.Eb); % binding/unbinding attempt rate (should always be 1?)
     
@@ -114,15 +124,19 @@ try
     %   Dimension 3 gives (1) the position and (2) the tether location, if
     %   bound to a tether.  If unbound, (2) is zero.
     all_x_output = zeros(paramTemp.runs,paramTemp.timesteps+1,2);
-
+    lifetimeList = zeros(1,paramTemp.runs);
+    eCurrent = zeros(paramTemp.runs, paramTemp.timesteps);
+    distList = zeros(paramTemp.runs, paramTemp.timesteps);
     % Loop over all runs.
-    parfor i=1:paramTemp.runs
+    for i=1:paramTemp.runs
         pause(i/100); % pause for i/100 seconds
         rng('shuffle');
         %fprintf('for i = %d Rand num = %f \n', ii, rand() );
         % Run hopping simulation and store results.
         % tether_locs is an array giving the tether location for each tether.
-        [ all_x_output(i,:,:), ~] = NumericalHoppingTether( paramTemp, plot_flag );
+        [ x, ~,eCurrent(i,:),distList(i,:)] = NumericalHoppingTether( paramTemp, plot_flag );
+        all_x_output(i,:,:) = x;
+        [~,~,lifetimeList(i)] = LifetimeCalculator(x);
     end
     % Process the results.
     % Re-format x-array so that Mike's MSD calculator can use it.
@@ -138,7 +152,6 @@ try
     %   Dimension 2 is the standard deviation of the MSD.
     %   Dimension 3 is the number of intervals used in the calculation.
     msd = zeros(paramTemp.runs, paramTemp.timesteps,3);
-    
     timesteps = paramTemp.timesteps;
     % Call the MSD computer.
     parfor i=1:paramTemp.runs
@@ -159,6 +172,9 @@ try
     fileObj.param = param;
     fileObj.paramTemp = paramTemp;
     fileObj.lr = lr;
+    fileObj.lifetimeList = lifetimeList;
+    fileObj.eCurrent = eCurrent;
+    fileObj.distList = distList;
     movefile(filename,'./output'); %why is this giving an error?
   end
   runTime = toc(RunTimeID);
