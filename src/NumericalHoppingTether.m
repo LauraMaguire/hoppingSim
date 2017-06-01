@@ -148,7 +148,7 @@ for i=1:timesteps
             delta_energy = energy_nearest - binding_energy;
             if delta_energy < 0 % always go down in energy
                 x(i+1,2) = index;
-                disp(['Binding. tether location is ' num2str(x(i+1,2))]);
+                %disp(['Binding. tether location is ' num2str(x(i+1,2))]);
             elseif  rand < exp(-delta_energy) % accept moves to higher energy with probability e^-energy;
                 x(i+1,2) = index;
                 %disp(['Binding. tether location is ' num2str(x(i+1,2))]);
