@@ -62,12 +62,14 @@ try
   disp(param);
   
   %build a parameter matrix - I think these are the ones that get varied
-  param_mat = combvec( param.koff, param.lc );
+  param_mat = combvec( param.lc, param.r0, param.Ef, param.hop_probability );
   [~,nparams] = size(param_mat);
   
   % For some reason, param_mat gets "sliced". Create vectors to get arround
-  param_koff = param_mat(1,:);
-  param_lc = param_mat(2,:);
+  param_lc = param_mat(1,:);
+  param_r0 = param_mat(2,:);
+  param_Ef = param_mat(3,:);
+  param_hop_probability= param_mat(4,:);
   
   % print some stuff
   fprintf('Starting paramloop \n')
@@ -82,39 +84,43 @@ try
     fprintf('for ii = %d Rand num = %f \n', ii, rand() );
     
     % assign temp variables
-    
     paramTemp = param;
-    paramTemp.koff = param_koff(ii);
     paramTemp.lc = param_lc(ii);
+    paramTemp.r0 = param_r0(ii);
+    paramTemp.Ef = param_Ef(ii);
+    paramTemp.hop_probability = param_hop_probability(ii);
     
-    paramTemp.Kd = paramTemp.koff/paramTemp.kon; % in uM
-    paramTemp.Df = paramTemp.a^2/paramTemp.tau; % in nm^2/s
-    paramTemp.pf = (1+paramTemp.Nt/paramTemp.Kd)^(-1); % free probability
-    paramTemp.Db_theo = paramTemp.Df*paramTemp.koff*paramTemp.lc*paramTemp.lp/...
-        (paramTemp.koff*paramTemp.lc*paramTemp.lp + 3*paramTemp.Df); % theoretical bound diffusion coefficient
-    paramTemp.Deff_theo = paramTemp.pf*paramTemp.Df + (1-paramTemp.pf)*paramTemp.Db_theo; % theoretical effective diffusion
+    % calculate remaining parameters
+    lp = param.lp;
+    lc = paramTemp.lc;
+    k = 3/(2*lc*lp);
+    paramTemp.k = k;
     
-    paramTemp.c = paramTemp.a*(paramTemp.Nt*1e-6/1.66)^(1/3); % fraction of lattice sites with tether attachment point
-    paramTemp.k = (3*paramTemp.a^2)/(2*paramTemp.lc*paramTemp.lp); % n.d. spring constant
-    %paramTemp.nu = sqrt(pi/(2*paramTemp.k))*erf((1/(2*paramTemp.c))*sqrt(paramTemp.k/2)); % handy constant
-    paramTemp.nu = sqrt(2*pi/(paramTemp.k)); % handy constant
-    paramTemp.Ef = -log((2*paramTemp.c*paramTemp.Kd/paramTemp.Nt)*paramTemp.nu); % n.d. energy of a free particle (divided by thermal energy)
-    %paramTemp.Eb = (1./(2.*paramTemp.c.*paramTemp.nu)).*(paramTemp.c.*paramTemp.nu-exp(-paramTemp.k./(8.*paramTemp.c.^2))./2); % n.d. avg. energy of a bound particle
-    paramTemp.Eb = 0.5;
-    paramTemp.Zf = paramTemp.N.*exp(-paramTemp.Ef); % free partition function
-    paramTemp.Zb = paramTemp.N.*paramTemp.c.*paramTemp.nu; % bound partition function
-    
-    paramTemp.Z = paramTemp.Zf+paramTemp.Zb; % total partition function
-    
-    paramTemp.binding_energy = paramTemp.Ef;
-    paramTemp.binding_rate = paramTemp.koff.*paramTemp.tau.*exp(paramTemp.Ef-paramTemp.Eb); % binding/unbinding attempt rate (should always be 1?)
+%     paramTemp.Kd = paramTemp.koff/paramTemp.kon; % in uM
+%     paramTemp.Df = paramTemp.a^2/paramTemp.tau; % in nm^2/s
+%     paramTemp.pf = (1+paramTemp.Nt/paramTemp.Kd)^(-1); % free probability
+%     paramTemp.Db_theo = paramTemp.Df*paramTemp.koff*paramTemp.lc*paramTemp.lp/...
+%         (paramTemp.koff*paramTemp.lc*paramTemp.lp + 3*paramTemp.Df); % theoretical bound diffusion coefficient
+%     paramTemp.Deff_theo = paramTemp.pf*paramTemp.Df + (1-paramTemp.pf)*paramTemp.Db_theo; % theoretical effective diffusion
+%     paramTemp.c = paramTemp.a*(paramTemp.Nt*1e-6/1.66)^(1/3); % fraction of lattice sites with tether attachment point
+%     paramTemp.k = (3*paramTemp.a^2)/(2*paramTemp.lc*paramTemp.lp); % n.d. spring constant
+%     %paramTemp.nu = sqrt(pi/(2*paramTemp.k))*erf((1/(2*paramTemp.c))*sqrt(paramTemp.k/2)); % handy constant
+%     paramTemp.nu = sqrt(2*pi/(paramTemp.k)); % handy constant
+%     paramTemp.Ef = -log((2*paramTemp.c*paramTemp.Kd/paramTemp.Nt)*paramTemp.nu); % n.d. energy of a free particle (divided by thermal energy)
+%     %paramTemp.Eb = (1./(2.*paramTemp.c.*paramTemp.nu)).*(paramTemp.c.*paramTemp.nu-exp(-paramTemp.k./(8.*paramTemp.c.^2))./2); % n.d. avg. energy of a bound particle
+%     paramTemp.Eb = 0.5;
+%     paramTemp.Zf = paramTemp.N.*exp(-paramTemp.Ef); % free partition function
+%     paramTemp.Zb = paramTemp.N.*paramTemp.c.*paramTemp.nu; % bound partition function
+%     paramTemp.Z = paramTemp.Zf+paramTemp.Zb; % total partition function
+%     paramTemp.binding_rate = paramTemp.koff.*paramTemp.tau.*exp(paramTemp.Ef-paramTemp.Eb); % binding/unbinding attempt rate (should always be 1?)
     
     plot_flag = 0;
     
-    filestring=['Kd',num2str(paramTemp.Kd,'%.3f'),...
+    filestring=['Ef',num2str(paramTemp.Ef,'%.2f'),...
       '_lc',num2str(paramTemp.lc,'%.0f'),...
-      '_Nt',num2str(paramTemp.Nt,'%.0f'),...
-      '_hopProb',num2str(paramTemp.hop_probability,'%.2f') ];
+      '_r0',num2str(paramTemp.r0,'%.2f'),...
+      '_hopProb',num2str(paramTemp.hop_probability,'%.2f'),...
+      '_TrID', num2str(paramTemp.trID)];
     filename=['data_',filestring,'.mat'];
     fprintf('%s\n',filename);
 

@@ -7,9 +7,9 @@
 clear param
 
 % Variable parameters
-params.lc = [100 500]; % Nup contour length in nm
-params.r0 = [0.1 0.5]; % Binding attempt rate (non-dim)
-params.Ef = [0.01 0.1 1]; % Free energy in units of kT (non-dim)
+param.lc = [100 500]; % Nup contour length in nm
+param.r0 = [0.1 0.5]; % Binding attempt rate (non-dim)
+param.Ef = [0.01 0.1 1]; % Free energy in units of kT (non-dim)
 param.hop_probability = [0 0.1 0.9]; % Hopping attempt rate (non-dim)
 
 % Parameters that should stay constant

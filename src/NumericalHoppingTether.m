@@ -17,8 +17,8 @@ if nargin
     k = params.k;
     c = params.c;
     hop_probability = params.hop_probability; 
-    binding_rate = params.binding_rate;  
-    binding_energy = params.binding_energy; 
+    r0 = params.r0;  
+    Ef = params.Ef; 
     right_probability = params.right_probability; 
 else
     N = 10^3; % Number of lattice sites
@@ -27,8 +27,8 @@ else
     % so that potential energy is 0.5*k x^2 (k = k/kB T)
     c = 0.05; % fraction lattice points with tether attachment sites.
     hop_probability = 0.1; % percent of time you attempt a hop
-    binding_rate = 0.1; % this is basically kon for local density = 1 probability of binding.
-    binding_energy = 100; % in KT
+    r0 = 0.1; % this is basically kon for local density = 1 probability of binding.
+    Ef = 100; % in KT
     right_probability = 0.5; % in case I want to include drift
     plot_flag = 1;
 end
@@ -111,9 +111,9 @@ for i=1:timesteps
                 x(i+1,2) = x(i,2);
             end
             
-        elseif staterand < hop_probability + binding_rate % enter this loop if attempting to unbind
+        elseif staterand < hop_probability + r0 % enter this loop if attempting to unbind
             %disp(['R = ' num2str(staterrand) ', hp+br = ' num2str(hop_probability+binding_rate) ' , attempting to unbind']);
-            delta_energy = binding_energy-energy_current;
+            delta_energy = Ef-energy_current;
             Ecurrent(i) = energy_current; % can remove when lifetime problem is solved
             %disp(['Delta energy is ' num2str(delta_energy)]);
             unbindingRand = rand;
@@ -135,7 +135,7 @@ for i=1:timesteps
         
         
     elseif x(i,2)==0 % particle is unbound.  This loop attempts binding.
-        if staterand < binding_rate
+        if staterand < r0
             %[mindistance, index] = min(wrapdistance(tether_locations,x(i,1),N)); % finds closest tether
             distList = wrapdistance(tether_locations,x(i,1),N);
             mindistance = min(distList); % finds closest tether 
@@ -145,7 +145,7 @@ for i=1:timesteps
             %accept with probability that depends on the binding energy
              %check the potential energy of the current location
             energy_nearest = 0.5*k*(mindistance)^2;
-            delta_energy = energy_nearest - binding_energy;
+            delta_energy = energy_nearest - Ef;
             if delta_energy < 0 % always go down in energy
                 x(i+1,2) = index;
                 %disp(['Binding. tether location is ' num2str(x(i+1,2))]);
