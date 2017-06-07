@@ -95,6 +95,8 @@ try
     lc = paramTemp.lc;
     k = 3/(2*lc*lp);
     paramTemp.k = k;
+    runs = paramTemp.runs;
+    timesteps = paramTemp.timesteps;
     
 %     paramTemp.Kd = paramTemp.koff/paramTemp.kon; % in uM
 %     paramTemp.Df = paramTemp.a^2/paramTemp.tau; % in nm^2/s
@@ -118,7 +120,7 @@ try
     
     filestring=['Ef',num2str(paramTemp.Ef,'%.2f'),...
       '_lc',num2str(paramTemp.lc,'%.0f'),...
-      '_r0',num2str(paramTemp.r0,'%.2f'),...
+      '_r',num2str(paramTemp.r0,'%.2f'),...
       '_hopProb',num2str(paramTemp.hop_probability,'%.2f'),...
       '_TrID', num2str(paramTemp.trID)];
     filename=['data_',filestring,'.mat'];
@@ -129,12 +131,13 @@ try
     %   Dimension 2 indexes the timestep.
     %   Dimension 3 gives (1) the position and (2) the tether location, if
     %   bound to a tether.  If unbound, (2) is zero.
-    all_x_output = zeros(paramTemp.runs,paramTemp.timesteps+1,2);
-    lifetimeList = zeros(1,paramTemp.runs);
-    eCurrent = zeros(paramTemp.runs, paramTemp.timesteps);
-    distList = zeros(paramTemp.runs, paramTemp.timesteps);
+    all_x_output = zeros(runs,timesteps+1,2);
+    lifetimeList = zeros(1,runs);
+    eCurrent = zeros(runs, timesteps);
+    distList = zeros(runs, timesteps);
+    boundList = zeros(runs, timesteps+1);
     % Loop over all runs.
-    parfor i=1:paramTemp.runs
+    parfor i=1:runs
         pause(i/100); % pause for i/100 seconds
         rng('shuffle');
         %fprintf('for i = %d Rand num = %f \n', ii, rand() );
@@ -142,7 +145,8 @@ try
         % tether_locs is an array giving the tether location for each tether.
         [ x, ~,eCurrent(i,:),distList(i,:)] = NumericalHoppingTether( paramTemp, plot_flag );
         all_x_output(i,:,:) = x;
-        [~,~,lifetimeList(i)] = LifetimeCalculator(x);
+        [bound,~,lifetimeList(i)] = LifetimeCalculator(x);
+        boundList(i,:) = bound;
     end
     % Process the results.
     % Re-format x-array so that Mike's MSD calculator can use it.
@@ -167,21 +171,30 @@ try
     meanMSD = mean(squeeze(msd(:,:,1)),1);
     meanErr = std(squeeze(msd(:,:,2)),1);
     
+    % Make results structure
+    results = struct();
+    results.meanMSD = meanMSD;
+    results.meanErr = meanErr;
+    results.dtime = 1:timesteps;
+    t = 1:timesteps/2;
+    results.Derr = meanErr(1:end/2)./t;
+    results.lr = lr;
+    results.lifetimeList = lifetimeList;
+    results.eCurrent = eCurrent;
+    results.distList = distList;
+    results.boundList = boundList;
+    
     % Save the important results in a .mat file in output directory.
     fileObj = matfile(filename,'Writable',true);
-    fileObj.meanMSD = meanMSD;
-    fileObj.meanErr = meanErr;
-    fileObj.dtime = 1:timesteps;
     fileObj.t = 1:timesteps/2;
     fileObj.Deff = meanMSD(1:end/2)./fileObj.t;
-    fileObj.Derr = meanErr(1:end/2)./fileObj.t;
-    fileObj.param = param;
-    fileObj.paramTemp = paramTemp;
-    fileObj.lr = lr;
-    fileObj.lifetimeList = lifetimeList;
-    fileObj.eCurrent = eCurrent;
-    fileObj.distList = distList;
-    movefile(filename,'./output'); %why is this giving an error?
+    fileObj.koff = 1/mean(nonzeros(lifetimeList));
+    fileObj.pf = 1-sum(sum(boundList))/(runs*timesteps);
+    fileObj.Deff_calc = fileObj.pf+(1-fileObj.pf)*(fileObj.koff*lc*lp)/(3+fileObj.koff*lc*lp);
+    fileObj.paramIn = param;
+    fileObj.paramOut = paramTemp;
+    fileObj.results = results;
+    movefile(filename,'./output');
   end
   runTime = toc(RunTimeID);
   runHr = floor( runTime / 3600); runTime = runTime - runHr*3600;
