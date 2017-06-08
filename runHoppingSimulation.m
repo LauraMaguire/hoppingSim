@@ -170,24 +170,27 @@ try
     % Take the mean MSD over all runs.
     meanMSD = mean(squeeze(msd(:,:,1)),1);
     meanErr = std(squeeze(msd(:,:,2)),1);
+    dtime = 1:timesteps;
+    Deff = findHorztlAsymp(dtime(1:end/2),meanMSD(1:end/2),meanErr(1:end/2));
     
     % Make results structure
     results = struct();
     results.meanMSD = meanMSD;
     results.meanErr = meanErr;
-    results.dtime = 1:timesteps;
-    t = 1:timesteps/2;
-    results.Derr = meanErr(1:end/2)./t;
+    results.dtime = dtime;
+    %t = 1:timesteps/2;
+    %results.Derr = meanErr(1:end/2)./t;
     results.lr = lr;
     results.lifetimeList = lifetimeList;
     results.eCurrent = eCurrent;
     results.distList = distList;
     results.boundList = boundList;
+    results.Deff = Deff;
     
     % Save the important results in a .mat file in output directory.
     fileObj = matfile(filename,'Writable',true);
-    fileObj.t = 1:timesteps/2;
-    fileObj.Deff = meanMSD(1:end/2)./fileObj.t;
+    %fileObj.t = 1:timesteps/2;
+    %fileObj.Deff = meanMSD(1:end/2)./fileObj.t;
     fileObj.koff = 1/mean(nonzeros(lifetimeList));
     fileObj.pf = 1-sum(sum(boundList))/(runs*timesteps);
     fileObj.Deff_calc = fileObj.pf+(1-fileObj.pf)*(fileObj.koff*lc*lp)/(3+fileObj.koff*lc*lp);

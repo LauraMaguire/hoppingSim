@@ -49,7 +49,10 @@ if eventCounter==0
     bindingRecord=0;
 end
 
-% calculate the mean lifetime
-lifetime = mean(bindingRecord);
+h = histogram(bindingRecord,round(length(bindingRecord/20)));
+x = h.BinWidth*([1:length(h.Values)]-0.5);
+y = h.Values;
+[fit, ~] = ExpFit(x,y);
+lifetime = -1/fit.b;
 
 end
