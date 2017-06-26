@@ -1,18 +1,13 @@
 function [ x, tether_locations, Ecurrent,distances] = NumericalHoppingTether( params, plot_flag )
 try
-% To run: [x, tether_locations] = NumericalHoppingTether;
+ 
+% This code runs the simulation with a continuous model, taking in only
+% non-dimensional parameters.
 
-% To do:
-% Make units make sense.
-% periodic boundary conditions aren't right, need to make the tethers be
-% periodic not the actual positions. 
-% initialize random number generator
-% Check if I've done the right thing with the binding rate constant -  Not sure how to deal with the rate constant here. 
-
-
-    % Simulation and Physical Parameters and setup
 if nargin
-    N = params.N;
+    L = params.L;
+    D = params.D;
+    deltaT = params.deltaT;
     timesteps = params.timesteps;
     k = params.k;
     c = params.c;
@@ -33,34 +28,14 @@ else
     plot_flag = 1;
 end
 
-% Make a tether vector with evenly spaced tethers
-spacing = round(1/c);
-% Slightly adjust the total number of lattice sites to make the tether
-% spacing fit neatly
-remainder = mod(N,spacing);
-Nadj = N-remainder;
-M = Nadj/spacing;
+% Mak a tether vector with randomly-spaced tethers from a continuous
+% uniform distribution.
 
-% Make the tether locations vector.
-tether_locations = zeros(1,M);
-for i=1:M
-    tether_locations(i) = spacing*(i-1)+1;
-end
-
-% Reset the total number of lattice sites.
-N = Nadj;
-
-
-% Some checks
-% if hop_probability+binding_rate > 1
-%     fprintf('hop_probability+binding_rate > 1')
-% end
-if M==0
-    pringf('must have at least one tether')
-    M = 1;
-end
-
-
+% Set number of tethers:
+M = round(L*c);
+% Make a sorted list of random tethers:
+tether_locations = L*sort(rand(M,1));
+% 
 
 % Need three types of steps, to unbind, to hop, or to just diffuse. It
 % seems like diffusion is a different type of step.  So there should be
@@ -69,7 +44,9 @@ end
 % for now just do one particle.  x(i,1) = position, x(i,2) is well number (0 if
 % unbound.
 x = zeros(timesteps,2);
-x(1,:) = [N/2 0]; % start at the center.
+x(1,:) = [L/2 0]; % start at the center.
+
+% intializing arrays for some diagnostic variables
 Ecurrent = zeros(timesteps,1); % can remove when lifetime problem is solved
 distances = zeros(timesteps,1);
 
@@ -80,12 +57,11 @@ for i=1:timesteps
         % LM: wrapdistance calculates how far particle is from center of
         % well, taking periodic boundary conditions into account.
         % energy_current = energy at current time
-        dist = (wrapdistance(x(i,1),tether_locations(x(i,2)),N));
+        dist = (wrapdistance(x(i,1),tether_locations(x(i,2)),L));
         distances(i) = dist;
         energy_current = 0.5*k*dist^2; % calculate the energy in this tether
-        %energy_current = 0.5*k*abs(x(i,1)-tether_locations(x(i,2)))^2; % energy, nothing fancy with wrapping
         %disp(['Step ' num2str(i) ', tethered now, staterrand = ' num2str(staterrand)]);
-        if staterand < hop_probability; % enter this loop if attempting a hop
+        if staterand < hop_probability; % enter this loop if attempting a hop - need to come back and fix
             %disp(['R = ' num2str(staterrand) ', hp = ' num2str(hop_probability) ' , attempting hop']);
             % find the closest adjacent tether Could also randomly pick
             % right or left?  Would it be faster to call wrap only once and
@@ -137,7 +113,7 @@ for i=1:timesteps
     elseif x(i,2)==0 % particle is unbound.  This loop attempts binding.
         if staterand < r0
             %[mindistance, index] = min(wrapdistance(tether_locations,x(i,1),N)); % finds closest tether
-            distList = wrapdistance(tether_locations,x(i,1),N);
+            distList = wrapdistance(tether_locations,x(i,1),L);
             mindistance = min(distList); % finds closest tether 
             minIndexList = find(distList==mindistance);
             index = datasample(minIndexList,1); % randomly choose one index
@@ -163,10 +139,12 @@ for i=1:timesteps
     
     
     % Done with state changes - now deal with diffusion
+    sigma = 4*D*deltaT; % change this later
+    step = 1/(2*sigma)*normrnd(0,sigma); %pick step size from a gaussian distribution
     if rand < right_probability % attempt move to the right.
-        test_position = x(i,1)+1;
+        test_position = x(i,1)+step;
     else % or to the left.
-        test_position = x(i,1)-1;
+        test_position = x(i,1)-step;
     end
     
     if x(i+1,2) == 0 % unbound, accept move
@@ -175,9 +153,9 @@ for i=1:timesteps
         %check the potential energy of the current location
         % note, the state has already changed, so the tether_location is
         % x(i+1,2), the position is changed here, so x(i,1)
-        energy_current = 0.5*k*wrapdistance(x(i,1),tether_locations(x(i+1,2)), N)^2;
+        energy_current = 0.5*k*wrapdistance(x(i,1),tether_locations(x(i+1,2)), L)^2;
         %and the energy of the test position
-        energy_test_position = 0.5*k*wrapdistance(test_position, tether_locations(x(i+1,2)), N)^2;
+        energy_test_position = 0.5*k*wrapdistance(test_position, tether_locations(x(i+1,2)), L)^2;
         delta_energy = energy_test_position - energy_current;
         
         if delta_energy < 0 % always go down in energy

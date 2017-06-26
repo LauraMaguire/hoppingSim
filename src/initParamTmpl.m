@@ -14,10 +14,12 @@ param.hop_probability = [0 0.1 0.9]; % Hopping attempt rate (non-dim)
 
 % Parameters that should stay constant
 param.lp = 1; % Nup persistence length (in nm)
-param.c = 0.1; % fraction of lattice sites with tether attached
+param.c = 0.1; % number of tethers per nm
 
 % Parameters relating to the simulation logistics
-param.N = 1e5; % total number of lattice points
+param.L = 1e5; % length of simulated medium in nm
+param.D = 1; % diffusion coefficient
+param.deltaT = 1; % timestep (in what units?)
 param.timesteps = 10^5; % Total number of timesteps.
 param.runs = 10; % number of times to run the simulation
 param.right_probability = 0.5; % in case I want to include drift
