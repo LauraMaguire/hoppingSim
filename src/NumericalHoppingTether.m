@@ -61,11 +61,9 @@ for i=1:timesteps
         distances(i) = dist;
         energy_current = 0.5*k*dist^2; % calculate the energy in this tether
         %disp(['Step ' num2str(i) ', tethered now, staterrand = ' num2str(staterrand)]);
+        % hopping loop below is not set up for continuous model yet
         if staterand < hop_probability; % enter this loop if attempting a hop - need to come back and fix
             %disp(['R = ' num2str(staterrand) ', hp = ' num2str(hop_probability) ' , attempting hop']);
-            % find the closest adjacent tether Could also randomly pick
-            % right or left?  Would it be faster to call wrap only once and
-            % have another variable?
             % test_tethers needs to test only "reasonably close" tethers -
             % not sure yet how to set that up
             test_tethers = [wrapdistance(tether_locations(wrap(x(i,2)+1,M)),x(i,1), N), wrap(x(i,2)+1,M); ...
@@ -74,9 +72,6 @@ for i=1:timesteps
             minDist = min(testDist);
             testIndex = find(testDist==minDist);
             index = datasample(testIndex,1);
-%             [mindistance, test_index] = min(test_tethers(:,1));
-%             index = test_tethers(test_index,2);
-            %energy if you were attached to the closest adjacent teather
             % LM: Calculate the particle's energy if it were attached to
             % its nearest-neighbor tether instead of its current tether
             energy_nearest = 0.5*k*(mindistance)^2; 
