@@ -66,6 +66,8 @@ for i=1:timesteps
             % find the closest adjacent tether Could also randomly pick
             % right or left?  Would it be faster to call wrap only once and
             % have another variable?
+            % test_tethers needs to test only "reasonably close" tethers -
+            % not sure yet how to set that up
             test_tethers = [wrapdistance(tether_locations(wrap(x(i,2)+1,M)),x(i,1), N), wrap(x(i,2)+1,M); ...
                             wrapdistance(tether_locations(wrap(x(i,2)-1,M)),x(i,1), N), wrap(x(i,2)-1,M)];
             testDist = min(test_tethers(:,1));
@@ -139,33 +141,29 @@ for i=1:timesteps
     
     
     % Done with state changes - now deal with diffusion
-    sigma = 4*D*deltaT; % change this later
+    % set arbitrary gamma for now and assume F = - kx
+    g = 0.1;
+    sigma = 4*D*deltaT;
     step = 1/(2*sigma)*normrnd(0,sigma); %pick step size from a gaussian distribution
-    if rand < right_probability % attempt move to the right.
-        test_position = x(i,1)+step;
-    else % or to the left.
-        test_position = x(i,1)-step;
-    end
     
     if x(i+1,2) == 0 % unbound, accept move
-        x(i+1,1) = test_position;
+        if rand < right_probability % attempt move to the right.
+            x(i+1,1) = x(i,1)+ step;
+        else % or to the left.
+            x(i+1,1) = x(i,1)-step;
+        end
     else % bound, test energy to see whether to accept move.
-        %check the potential energy of the current location
-        % note, the state has already changed, so the tether_location is
-        % x(i+1,2), the position is changed here, so x(i,1)
-        energy_current = 0.5*k*wrapdistance(x(i,1),tether_locations(x(i+1,2)), L)^2;
-        %and the energy of the test position
-        energy_test_position = 0.5*k*wrapdistance(test_position, tether_locations(x(i+1,2)), L)^2;
-        delta_energy = energy_test_position - energy_current;
-        
-        if delta_energy < 0 % always go down in energy
-            x(i+1,1) = test_position;
-        elseif  rand < exp(-delta_energy) % accept moves to higher energy with probability e^-energy;
-            x(i+1,1) = test_position;
-        else % rejected the move, so stay where you are
-            x(i+1,1) = x(i,1);
+        % find displacement from center of well
+        dispFromCenter = wrapdisplacement(x(i,1),tether_locations(x(i+1,2)),L);
+        if rand < right_probability % attempt move to the right.
+            x(i+1,1) = x(i,1)-g*k*dispFromCenter*deltaT + step;
+        else % or to the left.
+            x(i+1,1) = x(i,1)-g*k*dispFromCenter*deltaT-step;
         end
     end
+    % if particle has moved off the end of the map, put it back on the
+    % other side
+    x(i+1,1) = wrap(x(i+1,1),L);
     
 end
 
