@@ -140,13 +140,13 @@ try
     parfor i=1:runs
         pause(i/100); % pause for i/100 seconds
         rng('shuffle');
-        %fprintf('for i = %d Rand num = %f \n', ii, rand() );
+        %fprintf('for i = %d Rand num = %f \n', i, rand() );
         % Run hopping simulation and store results.
         % tether_locs is an array giving the tether location for each tether.
         [ x, ~,eCurrent(i,:),distList(i,:)] = NumericalHoppingTether( paramTemp, plot_flag );
         all_x_output(i,:,:) = x;
-        [bound,~,lifetimeList(i)] = LifetimeCalculator(x);
-        boundList(i,:) = bound;
+        %[bound,~,lifetimeList(i)] = LifetimeCalculator(x);
+        %boundList(i,:) = bound;
     end
     % Process the results.
     % Re-format x-array so that Mike's MSD calculator can use it.
@@ -170,7 +170,7 @@ try
     % Take the mean MSD over all runs.
     meanMSD = mean(squeeze(msd(:,:,1)),1);
     meanErr = std(squeeze(msd(:,:,2)),1);
-    dtime = 1:timesteps;
+    dtime = param.deltaT*(1:timesteps);
     Deff = findHorztlAsymp(dtime(1:end/2),meanMSD(1:end/2),meanErr(1:end/2));
     
     % Make results structure
@@ -178,14 +178,14 @@ try
     results.meanMSD = meanMSD;
     results.meanErr = meanErr;
     results.dtime = dtime;
-    %t = 1:timesteps/2;
-    %results.Derr = meanErr(1:end/2)./t;
+    t = param.deltaT*(1:timesteps/2);
+    results.Derr = meanErr(1:end/2)./(2*t);
     results.lr = lr;
-    results.lifetimeList = lifetimeList;
+    %results.lifetimeList = lifetimeList;
     results.eCurrent = eCurrent;
     results.distList = distList;
-    results.boundList = boundList;
-    results.Deff = Deff;
+    %results.boundList = boundList;
+    results.Deff = meanMSD(1:end/2)./(2*t);
     
     % Save the important results in a .mat file in output directory.
     fileObj = matfile(filename,'Writable',true);

@@ -136,24 +136,26 @@ for i=1:timesteps
     
     
     % Done with state changes - now deal with diffusion
-    % set arbitrary gamma for now and assume F = - kx
-    g = 0.1;
-    sigma = 4*D*deltaT;
-    step = 1/(2*sigma)*normrnd(0,sigma); %pick step size from a gaussian distribution
-    
+    % gamma from Robert's Science Advances paper is just drag coefficient
+    % for a sphere; gamma = kBT/D; force-dependent term works out to be
+    % D*k*deltaT*deltaX (where k = spring constant/kBT)
+    sigma = sqrt(2*D*deltaT);
+    %step = 1/sqrt(2*pi*sigma^2)*normrnd(0,sigma); %pick step size from a gaussian distribution
+    step = normrnd(0,sigma);
     if x(i+1,2) == 0 % unbound, accept move
-        if rand < right_probability % attempt move to the right.
-            x(i+1,1) = x(i,1)+ step;
-        else % or to the left.
-            x(i+1,1) = x(i,1)-step;
-        end
+        x(i+1,1) = x(i,1) + step;
+%         if rand < right_probability % attempt move to the right.
+%             x(i+1,1) = x(i,1)+ step;
+%         else % or to the left.
+%             x(i+1,1) = x(i,1)-step;
+%         end
     else % bound, test energy to see whether to accept move.
         % find displacement from center of well
         dispFromCenter = wrapdisplacement(x(i,1),tether_locations(x(i+1,2)),L);
         if rand < right_probability % attempt move to the right.
-            x(i+1,1) = x(i,1)-g*k*dispFromCenter*deltaT + step;
+            x(i+1,1) = x(i,1)-D*k*dispFromCenter*deltaT + step;
         else % or to the left.
-            x(i+1,1) = x(i,1)-g*k*dispFromCenter*deltaT-step;
+            x(i+1,1) = x(i,1)-D*k*dispFromCenter*deltaT-step;
         end
     end
     % if particle has moved off the end of the map, put it back on the
