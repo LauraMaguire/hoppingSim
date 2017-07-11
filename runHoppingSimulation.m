@@ -1,38 +1,3 @@
-% runHoppingSimulation()
-% Description: executeable that calls main body of model diffusion_model
-% Program calls loads parameter file or calls initial parameter file if one
-% doesn't exist yet, sets up parallelization, and moves outputs
-%
-
-% Current problems:
-% The script to find horizontal asymptotes doesn't work.
-% Effective diffusion coefficient is wrong.
-% Average bound lifetime is wrong (80 when it should be 100, 580 when it
-% should be 1000).
-% Actual simulated bound particle energy doesn't match the predicted value,
-% and the mean distance from the tether's center is too large.  Hopefully
-% fixing this problem will fix the two above problems as well.
-
-% Things I've fixed/tried:
-% Changed random number generation to fix problem with noise.  Difficult to
-% check - will look out for issue in the future.
-% Fixed wrapdistance error and tested.
-% Fixed tether location error and tested.
-% Checked that Deff = 1 for no-hopping, no-binding case.
-% Fixed error leading to superdiffusive behavior - now randomly picks
-% between two equidistant tethers.
-% Average particle energy is very close when calculated two different ways.
-% Differences are probably due to discrete vs continuous calculations.
-% Changed limits of integration on stat mech calculation.
-% Wrote a function to calculate Zb and Eb numerically.
-
-% Things to try: 
-% Run through conversion scheme carefully.
-% Think physically about why Eb is coming up as 1/2 all the time.
-% Check that eCurrent calculator is working properly.
-% Redo entire analytical calculation in Matlab to eliminate algebra errors.
-
-
 function runHoppingSimulation()
 try
   addpath('./src');
@@ -62,12 +27,12 @@ try
   disp(param);
   
   %build a parameter matrix - I think these are the ones that get varied
-  param_mat = combvec( param.lc, param.r0, param.Ef, param.hop_probability );
+  param_mat = combvec( param.lc, param.konSite, param.Ef, param.hop_probability );
   [~,nparams] = size(param_mat);
   
   % For some reason, param_mat gets "sliced". Create vectors to get arround
   param_lc = param_mat(1,:);
-  param_r0 = param_mat(2,:);
+  param_konSite = param_mat(2,:);
   param_Ef = param_mat(3,:);
   param_hop_probability= param_mat(4,:);
   
@@ -86,7 +51,7 @@ try
     % assign temp variables
     paramTemp = param;
     paramTemp.lc = param_lc(ii);
-    paramTemp.r0 = param_r0(ii);
+    paramTemp.konSite = param_konSite(ii);
     paramTemp.Ef = param_Ef(ii);
     paramTemp.hop_probability = param_hop_probability(ii);
     
@@ -97,30 +62,12 @@ try
     paramTemp.k = k;
     runs = paramTemp.runs;
     timesteps = paramTemp.timesteps;
-    
-%     paramTemp.Kd = paramTemp.koff/paramTemp.kon; % in uM
-%     paramTemp.Df = paramTemp.a^2/paramTemp.tau; % in nm^2/s
-%     paramTemp.pf = (1+paramTemp.Nt/paramTemp.Kd)^(-1); % free probability
-%     paramTemp.Db_theo = paramTemp.Df*paramTemp.koff*paramTemp.lc*paramTemp.lp/...
-%         (paramTemp.koff*paramTemp.lc*paramTemp.lp + 3*paramTemp.Df); % theoretical bound diffusion coefficient
-%     paramTemp.Deff_theo = paramTemp.pf*paramTemp.Df + (1-paramTemp.pf)*paramTemp.Db_theo; % theoretical effective diffusion
-%     paramTemp.c = paramTemp.a*(paramTemp.Nt*1e-6/1.66)^(1/3); % fraction of lattice sites with tether attachment point
-%     paramTemp.k = (3*paramTemp.a^2)/(2*paramTemp.lc*paramTemp.lp); % n.d. spring constant
-%     %paramTemp.nu = sqrt(pi/(2*paramTemp.k))*erf((1/(2*paramTemp.c))*sqrt(paramTemp.k/2)); % handy constant
-%     paramTemp.nu = sqrt(2*pi/(paramTemp.k)); % handy constant
-%     paramTemp.Ef = -log((2*paramTemp.c*paramTemp.Kd/paramTemp.Nt)*paramTemp.nu); % n.d. energy of a free particle (divided by thermal energy)
-%     %paramTemp.Eb = (1./(2.*paramTemp.c.*paramTemp.nu)).*(paramTemp.c.*paramTemp.nu-exp(-paramTemp.k./(8.*paramTemp.c.^2))./2); % n.d. avg. energy of a bound particle
-%     paramTemp.Eb = 0.5;
-%     paramTemp.Zf = paramTemp.N.*exp(-paramTemp.Ef); % free partition function
-%     paramTemp.Zb = paramTemp.N.*paramTemp.c.*paramTemp.nu; % bound partition function
-%     paramTemp.Z = paramTemp.Zf+paramTemp.Zb; % total partition function
-%     paramTemp.binding_rate = paramTemp.koff.*paramTemp.tau.*exp(paramTemp.Ef-paramTemp.Eb); % binding/unbinding attempt rate (should always be 1?)
-    
+        
     plot_flag = 0;
     
     filestring=['Ef',num2str(paramTemp.Ef,'%.2f'),...
       '_lc',num2str(paramTemp.lc,'%.0f'),...
-      '_r',num2str(paramTemp.r0,'%.2f'),...
+      '_konSite',num2str(paramTemp.konSite,'%.2f'),...
       '_hopProb',num2str(paramTemp.hop_probability,'%.2f'),...
       '_TrID', num2str(paramTemp.trID)];
     filename=['data_',filestring,'.mat'];
