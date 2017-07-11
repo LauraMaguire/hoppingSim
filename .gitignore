@@ -7,6 +7,7 @@
 initParamsExample.m
 initParam.m
 Params.mat
+.DS_Store
 
 # Directories
 output/
