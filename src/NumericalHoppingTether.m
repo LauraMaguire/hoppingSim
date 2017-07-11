@@ -28,7 +28,7 @@ else
     plot_flag = 1;
 end
 
-% Mak a tether vector with randomly-spaced tethers from a continuous
+% Make a tether vector with randomly-spaced tethers from a continuous
 % uniform distribution.
 
 % Set number of tethers:

@@ -145,8 +145,8 @@ try
         % tether_locs is an array giving the tether location for each tether.
         [ x, ~,eCurrent(i,:),distList(i,:)] = NumericalHoppingTether( paramTemp, plot_flag );
         all_x_output(i,:,:) = x;
-        %[bound,~,lifetimeList(i)] = LifetimeCalculator(x);
-        %boundList(i,:) = bound;
+        [bound,~,lifetimeList(i)] = LifetimeCalculator(x);
+        boundList(i,:) = bound;
     end
     % Process the results.
     % Re-format x-array so that Mike's MSD calculator can use it.
@@ -171,7 +171,7 @@ try
     meanMSD = mean(squeeze(msd(:,:,1)),1);
     meanErr = std(squeeze(msd(:,:,2)),1);
     dtime = param.deltaT*(1:timesteps);
-    Deff = findHorztlAsymp(dtime(1:end/2),meanMSD(1:end/2),meanErr(1:end/2));
+    %Deff = findHorztlAsymp(dtime(1:end/2),meanMSD(1:end/2),meanErr(1:end/2));
     
     % Make results structure
     results = struct();
@@ -181,10 +181,10 @@ try
     t = param.deltaT*(1:timesteps/2);
     results.Derr = meanErr(1:end/2)./(2*t);
     results.lr = lr;
-    %results.lifetimeList = lifetimeList;
+    results.lifetimeList = lifetimeList;
     results.eCurrent = eCurrent;
     results.distList = distList;
-    %results.boundList = boundList;
+    results.boundList = boundList;
     results.Deff = meanMSD(1:end/2)./(2*t);
     
     % Save the important results in a .mat file in output directory.
