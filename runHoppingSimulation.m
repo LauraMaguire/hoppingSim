@@ -83,6 +83,10 @@ try
     eCurrent = zeros(runs, timesteps);
     distList = zeros(runs, timesteps);
     boundList = zeros(runs, timesteps+1);
+    boundRecord = zeros(runs, timesteps+1);
+    unboundList = zeros(runs, timesteps+1);
+    unboundRecord = zeros(runs, timesteps+1);
+    %konCalc = zeros(1,runs);
     % Loop over all runs.
     parfor i=1:runs
         pause(i/100); % pause for i/100 seconds
@@ -92,13 +96,36 @@ try
         % tether_locs is an array giving the tether location for each tether.
         [ x, ~,eCurrent(i,:),distList(i,:)] = NumericalHoppingTether( paramTemp, plot_flag );
         all_x_output(i,:,:) = x;
-        [bound,~,lifetimeList(i)] = LifetimeCalculator(x);
-        boundList(i,:) = bound;
+         [bound,brec] = koffCalculator(x);
+         boundList(i,:) = bound;
+         brec(timesteps+1) = 0;
+         boundRecord(i,:) = brec;
+         [~,unbound,urec] = konCalculator(x);
+         unboundList(i,:) = unbound;
+         urec(timesteps+1) = 0;
+         unboundRecord(i,:) = urec;
     end
     % Process the results.
     % Re-format x-array so that Mike's MSD calculator can use it.
     xx=zeros(1,paramTemp.runs,paramTemp.timesteps+1);
     lr = zeros(1,paramTemp.runs);
+    
+    boundRecord = nonzeros(boundRecord);
+    if length(boundRecord) > 50
+        [fit, ~] = ExpFit(boundRecord);
+        koff = -fit.b;
+    else
+        koff = 0;
+    end
+    
+    unboundRecord = nonzeros(unboundRecord);
+    if length(unboundRecord) > 50
+        [fit, ~] = ExpFit(unboundRecord);
+        kon = -fit.b;
+    else
+        kon = 0;
+    end
+    
     for i=1:paramTemp.runs
         xx(1,i,:) = all_x_output(i,:,1);
         lr(i) = sign(xx(1,i,1)-xx(1,i,end));
@@ -131,14 +158,17 @@ try
     results.lifetimeList = lifetimeList;
     results.eCurrent = eCurrent;
     results.distList = distList;
-    results.boundList = boundList;
+    results.boundRecord = nonzeros(boundRecord);
     results.Deff = meanMSD(1:end/2)./(2*t);
+    results.konCalc = kon;
+    results.unboundList = unboundList;
+    results.unboundRecord = nonzeros(unboundRecord);
     
     % Save the important results in a .mat file in output directory.
     fileObj = matfile(filename,'Writable',true);
     %fileObj.t = 1:timesteps/2;
     %fileObj.Deff = meanMSD(1:end/2)./fileObj.t;
-    fileObj.koff = 1/mean(nonzeros(lifetimeList));
+    fileObj.koff = koff;
     fileObj.pf = 1-sum(sum(boundList))/(runs*timesteps);
     fileObj.Deff_calc = fileObj.pf+(1-fileObj.pf)*(fileObj.koff*lc*lp)/(3+fileObj.koff*lc*lp);
     fileObj.paramIn = param;
