@@ -85,26 +85,19 @@ try
     %   Dimension 3 gives (1) the position and (2) the tether location, if
     %   bound to a tether.  If unbound, (2) is zero.
     all_x_output = zeros(runs,timesteps+1,2);
-    %lifetimeList = zeros(1,runs);
-    %eCurrent = zeros(runs, timesteps);
-    %distList = zeros(runs, timesteps);
-    %boundList = zeros(runs, timesteps+1);
     boundRecord = zeros(runs, timesteps+1);
     unboundList = zeros(runs, timesteps+1);
     unboundRecord = zeros(runs, timesteps+1);
-    %konCalc = zeros(1,runs);
+
     % Loop over all runs.
     parfor i=1:runs
         pause(i/100); % pause for i/100 seconds
         rng('shuffle');
         %fprintf('for i = %d Rand num = %f \n', i, rand() );
         % Run hopping simulation and store results.
-        % tether_locs is an array giving the tether location for each tether.
-        % [ x, ~,eCurrent(i,:),distList(i,:)] = NumericalHoppingTether( paramTemp, plot_flag );
         [ x, ~,~,~] = NumericalHoppingTether( paramTemp, plot_flag );
         all_x_output(i,:,:) = x;
         [~,br] = listBoundEvents(x);
-        % boundList(i,:) = bound;
         br(timesteps+1) = 0;
         boundRecord(i,:) = br;
         [unbound,ur] = listUnboundEvents(x);
@@ -131,6 +124,7 @@ try
     else
         kon = 0;
     end
+    close all
     
     % Calculate pf, fraction of time spent free
     pf = sum(sum(unboundList))/(runs*timesteps);
@@ -139,7 +133,6 @@ try
     xx=zeros(1,paramTemp.runs,paramTemp.timesteps+1);
     for i=1:paramTemp.runs
         xx(1,i,:) = all_x_output(i,:,1);
-%         lr(i) = sign(xx(1,i,1)-xx(1,i,end));
     end
 
     % Initialize the msd-array.
@@ -168,24 +161,14 @@ try
     results.Deff = meanMSD(1:end/2)./(2*t);
     results.Derr = meanErr(1:end/2)./(2*t);
 
-    %results.lr = lr;
-    %results.lifetimeList = lifetimeList;
-    %results.eCurrent = eCurrent;
-    %results.distList = distList;
     results.boundRecord = nonzeros(boundRecord);
     results.unboundRecord = nonzeros(unboundRecord);
     results.koffCalc = koff;
     results.konCalc = kon;
     results.pfCalc = pf;
-    
-    %results.unboundList = unboundList;
 
     % Save the important results in a .mat file in output directory.
     fileObj = matfile(filename,'Writable',true);
-    %fileObj.t = 1:timesteps/2;
-    %fileObj.Deff = meanMSD(1:end/2)./fileObj.t;
-    %fileObj.koff = koff;
-    %fileObj.pf = 1-sum(sum(boundList))/(runs*timesteps);
     fileObj.DeffCalc = (pf*D)+(1-pf)*(koff*lc*lp*D)/(3*D+koff*lc*lp);
     fileObj.paramIn = param;
     fileObj.paramOut = paramTemp;
