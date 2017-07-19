@@ -14,7 +14,7 @@ koff = params.koff;
 hop_probability = params.hop_probability; 
 konSite = params.konSite;  
 Ef = params.Ef; 
-right_probability = params.right_probability; 
+right_probability = params.right_probability;
 
 % Make a tether vector with randomly-spaced tethers from a continuous
 % uniform distribution.
@@ -38,7 +38,7 @@ for i=1:timesteps
     % Check for binding/unbinding state changes.
     if x(i,2) ~= 0 % enter this loop is the particle is currently bound
         probOff = koff*deltaT;
-        if randomNumber < probOff;
+        if randomNumber < probOff
             x(i+1,2) = 0;  % move to unbound state
         else
             x(i+1,2) = x(i,2); % otherwise, stay bound (no hopping yet)
