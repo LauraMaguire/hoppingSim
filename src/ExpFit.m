@@ -1,4 +1,4 @@
-function [fitresult, gof] = ExpFit(vec)
+function [fitresult, gof] = ExpFit(vec,deltaT)
 %CREATEFIT(X,Y)
 %  Create a fit.
 %
@@ -15,8 +15,12 @@ function [fitresult, gof] = ExpFit(vec)
 
 
 %%
+% [N,edges] = histcounts(vec);
+% y = N;
+% x = deltaT*(edges(1:end-1)+(edges(2)-edges(1))/2);
+% disp(x);
 h = histogram(vec);
-x = h.BinWidth*([1:length(h.Values)]-0.5);
+x = deltaT*h.BinWidth*([1:length(h.Values)]-0.5);
 y = h.Values;
 %% Fit: 'untitled fit 1'.
 [xData, yData] = prepareCurveData( x, y );

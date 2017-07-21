@@ -36,7 +36,7 @@ distances = zeros(timesteps,1);
 for i=1:timesteps
     randomNumber = rand;    
     % Check for binding/unbinding state changes.
-    if x(i,2) ~= 0 % enter this loop is the particle is currently bound
+    if x(i,2) ~= 0 % enter this loop if the particle is currently bound
         probOff = koff*deltaT;
         if randomNumber < probOff
             x(i+1,2) = 0;  % move to unbound state
@@ -53,11 +53,17 @@ for i=1:timesteps
         DeltaG = -Ef+0.5*k*wrapdistance(x(i,1),tether_locations(tetherIndex),L)^2;
     
         % Sum up Boltzmann factors for nearby sites.
-        denominator = sumNearbyBFs(x(i,1),k,L,nearbyIndices,tether_locations);
+        denominator = sumNearbyBFs(x(i,1),k,L,Ef,nearbyIndices,tether_locations);
     
         % Calculate probability of binding to nearest tether:
-        konCurrent = konSite*exp(-DeltaG)/denominator;
+        %konCurrent = konSite*exp(-DeltaG)/denominator;
+        konCurrent = koff*length(nearbyIndices)*exp(-DeltaG);
         onProb = konCurrent*deltaT;
+        if onProb > 1
+            disp('onProb greater than one');
+            disp(['konCurrent = ' num2str(konCurrent)]);
+            disp(['deltaT = ' num2str(deltaT)]);
+        end
     
         if randomNumber < onProb % accept binding to new tether
             x(i+1,2) = tetherIndex;

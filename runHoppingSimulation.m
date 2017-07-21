@@ -1,5 +1,12 @@
 function runHoppingSimulation()
 try
+    
+% Things that need doing:
+% Write a better wrapped displacement finder.
+% Figure out why plotted Deff is smaller than Dcalc.
+% See if we can get to diffusion-limited kon.
+
+
   addpath('./src');
   StartTime = datestr(now);
   currentdir=pwd;
@@ -60,9 +67,14 @@ try
     lc = paramTemp.lc;
     D = paramTemp.D;
     k = 3/(2*lc*lp);
+    Ef = paramTemp.Ef;
+    koff = paramTemp.koff;
     runs = paramTemp.runs;
     timesteps = paramTemp.timesteps;
-    Nt = 1.66*param.c^(1/3); %molar concentration of tether (I think?)
+    %Nt = 1.66e6*c^3; % tether concentration in uM
+    Nt = 1e3;
+    c = (Nt/1.66e6)^(1/3);
+    paramTemp.c=c;
     
     % make sure all parameters are recorded
     paramTemp.Nt = Nt;
@@ -78,6 +90,23 @@ try
       '_TrID', num2str(paramTemp.trID)];
     filename=['data_',filestring,'.mat'];
     fprintf('%s\n',filename);
+    
+    % Set timescale (override deltaT input)
+    % Timescale 1: diffusion between adjacent wells.
+    t1 = 1/(D*c^2);
+    % Timescale 2: diffusion from one side of well to another
+    t2 = 8*Ef/(k*D);
+    % Timescale 3: bound lifetime (1/koff)
+    t3 = 1/koff;
+    % Timescale 4: because the on probability keeps being larger than one
+    t4 = 1/(koff*exp(Ef));
+
+    % deltaT must be much smaller than each timescale.  If our other
+    % assumptions are being met properly, t1 should be much larger than t2.
+    %  I'm not sure if I'm calculating t2 correctly, though.
+    
+    deltaT = min([t1,t2,t3,t4])/100;
+    paramTemp.deltaT = deltaT;
 
     %   Initialize x-array:
     %   Dimension 1 indexes the run number.
@@ -107,19 +136,19 @@ try
     end
     % Process the results.
     
-    % Calculate koff
+    % Calculate koff (units of us^-1)
     boundRecord = nonzeros(boundRecord);
     if length(boundRecord) > 50
-        [fit, ~] = ExpFit(boundRecord);
+        [fit, ~] = ExpFit(boundRecord,deltaT);
         koff = -fit.b;
     else
         koff = 0;
     end
     
-    % Calculate kon
+    % Calculate kon (units of us^-1 uM^-1)
     unboundRecord = nonzeros(unboundRecord);
     if length(unboundRecord) > 50
-        [fit, ~] = ExpFit(unboundRecord);
+        [fit, ~] = ExpFit(unboundRecord,deltaT);
         kon = -fit.b/Nt;
     else
         kon = 0;
