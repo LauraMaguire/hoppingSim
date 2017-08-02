@@ -76,6 +76,11 @@ try
     c = (Nt/1.66e6)^(1/3);
     paramTemp.c=c;
     
+    % Attempt to estimate Ef to produce a given kon
+%     kon = 1e-3;
+%     Ef = 0.5*lambertw(2*(kon*k/(20*sqrt(2)*koff))^2);
+%     paramTemp.Ef = Ef;
+    
     % make sure all parameters are recorded
     paramTemp.Nt = Nt;
     paramTemp.k = k;
@@ -99,13 +104,15 @@ try
     % Timescale 3: bound lifetime (1/koff)
     t3 = 1/koff;
     % Timescale 4: because the on probability keeps being larger than one
-    t4 = 1/(koff*exp(Ef));
+    t4 = 1/(koff*exp(Ef)*(20*sqrt(2*Ef/k)));
 
     % deltaT must be much smaller than each timescale.  If our other
     % assumptions are being met properly, t1 should be much larger than t2.
     %  I'm not sure if I'm calculating t2 correctly, though.
     
-    deltaT = min([t1,t2,t3,t4])/100;
+    deltaT = min([t1,t2,t3,10*t4])/10;
+    disp([t1,t2,t3,t4]);
+    disp(num2str(deltaT));
     paramTemp.deltaT = deltaT;
 
     %   Initialize x-array:
@@ -195,6 +202,13 @@ try
     results.koffCalc = koff;
     results.konCalc = kon;
     results.pfCalc = pf;
+    
+    % Give some warnings about the time scales
+    if results.Deff(1) > 1.5
+        disp('Check time scale: Deff > 1.5 at t=0.');
+    elseif results.Deff(1) < 0.1
+        disp('Check time scale: Deff < 0.1 at t=0.');
+    end
 
     % Save the important results in a .mat file in output directory.
     fileObj = matfile(filename,'Writable',true);
