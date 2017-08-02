@@ -41,7 +41,26 @@ for i=1:timesteps
         if randomNumber < probOff
             x(i+1,2) = 0;  % move to unbound state
         else
-            x(i+1,2) = x(i,2); % otherwise, stay bound (no hopping yet)
+            % First, pick a random nearby tether to attempt hopping to.
+            nearbyIndices = findNearbyTethers(x(i,1),k,Ef,L,tether_locations,10);
+            tetherIndex = datasample(nearbyIndices,1);
+            
+            % Calculate Delta G to hop between current tether and new
+            % tether.
+            DeltaG = -(0.5*k*(wrapdistance(x(i,1),tether_locations(tetherIndex),L)^2 ...
+                -wrapdistance(x(i,1),tether_locations(x(i,2)),L)^2));
+            
+            % Calculate the probability of a hop.
+            kHop = konSite*length(nearbyIndices)*exp(-DeltaG/2);
+            probHop = kHop*deltaT;
+            
+            % Hop if needed, otherwise stay bound to original tether.
+            if randomNumber < probOff +probHop
+                x(i+1,2) = tetherIndex;
+            else
+                x(i+1,2) = x(i,2);
+            end
+            
         end
         
     elseif x(i,2)==0 % particle is unbound.  This loop attempts binding.
@@ -53,7 +72,7 @@ for i=1:timesteps
         DeltaG = -Ef+0.5*k*wrapdistance(x(i,1),tether_locations(tetherIndex),L)^2;
     
         % Sum up Boltzmann factors for nearby sites.
-        denominator = sumNearbyBFs(x(i,1),k,L,Ef,nearbyIndices,tether_locations);
+        % denominator = sumNearbyBFs(x(i,1),k,L,Ef,nearbyIndices,tether_locations);
     
         % Calculate probability of binding to nearest tether:
         %konCurrent = konSite*exp(-DeltaG)/denominator;
