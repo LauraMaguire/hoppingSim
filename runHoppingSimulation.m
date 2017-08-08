@@ -119,7 +119,7 @@ try
     paramTemp.deltaT = deltaT;
     
     % reset number of steps based on timestep
-    timesteps = round(5000/deltaT);
+    %timesteps = round(5000/deltaT);
     paramTemp.timesteps = timesteps;
     disp(num2str(timesteps));
 
