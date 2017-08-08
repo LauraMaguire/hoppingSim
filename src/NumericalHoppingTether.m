@@ -12,7 +12,7 @@ k = params.k;
 c = params.c;
 koff = params.koff;
 hop_probability = params.hop_probability; 
-konSite = params.konSite;  
+kHop = params.kHop;  
 Ef = params.Ef; 
 right_probability = params.right_probability;
 
@@ -51,12 +51,13 @@ for i=1:timesteps
                 -wrapdistance(x(i,1),tether_locations(x(i,2)),L)^2));
             
             % Calculate the probability of a hop.
-            kHop = konSite*length(nearbyIndices)*exp(-DeltaG/2);
+            kHop = kHop*length(nearbyIndices)*exp(-DeltaG/2);
             probHop = kHop*deltaT;
             
             % Hop if needed, otherwise stay bound to original tether.
             if randomNumber < probOff +probHop
                 x(i+1,2) = tetherIndex;
+                disp('Hopping');
             else
                 x(i+1,2) = x(i,2);
             end
@@ -101,17 +102,21 @@ for i=1:timesteps
     % sigma corresponds to Gaussian solution to diffusion equation.
     sigma = sqrt(2*D*deltaT);
     step = normrnd(0,sigma);
+    distances(i) = step; %remove after debugging
     if x(i+1,2) == 0 % unbound, accept move
         x(i+1,1) = x(i,1) + step;
     else % bound, move in a force-dependent way
         % find displacement from center of well
         dispFromCenter = wrapdisplacement(x(i,1),tether_locations(x(i+1,2)),L);
-        % incorporate a term based on spring force.Num
-        if rand < right_probability % attempt move to the right.
-            x(i+1,1) = x(i,1)-D*k*dispFromCenter*deltaT + step;
-        else % or to the left.
-            x(i+1,1) = x(i,1)-D*k*dispFromCenter*deltaT-step;
-        end
+        %dispFromCenter = 0; % remove after debugging!
+        % incorporate a term based on spring force.
+        x(i+1,1) = x(i,1)-D*k*dispFromCenter*deltaT + step;
+        %Don't think I need the following section anymore.
+%         if rand < right_probability % move to the right.
+%             x(i+1,1) = x(i,1)-D*k*dispFromCenter*deltaT + step;
+%         else % or to the left.
+%             x(i+1,1) = x(i,1)-D*k*dispFromCenter*deltaT - step;
+%         end
     end
     % if particle has moved off the end of the map, put it back on the
     % other side

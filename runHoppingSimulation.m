@@ -2,10 +2,12 @@ function runHoppingSimulation()
 try
     
 % Things that need doing:
+% Why is MSD proportional to time step?
+%   - free diffusion is fine regardless of timestep
+%   - diffusion with binding is fine if I remove force-dependent term
+%   - seems to be fine once I fixed the hopping bug - why?
+% Refine good timestep range and calculation.
 % Write a better wrapped displacement finder.
-% Figure out why plotted Deff is smaller than Dcalc.
-% See if we can get to diffusion-limited kon.
-
 
   addpath('./src');
   StartTime = datestr(now);
@@ -34,12 +36,12 @@ try
   disp(param);
   
   %build a parameter matrix - I think these are the ones that get varied
-  param_mat = combvec( param.lc, param.konSite, param.Ef, param.hop_probability );
+  param_mat = combvec( param.lc, param.kHop, param.Ef, param.hop_probability );
   [~,nparams] = size(param_mat);
   
   % For some reason, param_mat gets "sliced". Create vectors to get arround
   param_lc = param_mat(1,:);
-  param_konSite = param_mat(2,:);
+  param_kHop = param_mat(2,:);
   param_Ef = param_mat(3,:);
   param_hop_probability= param_mat(4,:);
   
@@ -58,7 +60,7 @@ try
     % assign temp variables
     paramTemp = param;
     paramTemp.lc = param_lc(ii);
-    paramTemp.konSite = param_konSite(ii);
+    paramTemp.kHop = param_kHop(ii);
     paramTemp.Ef = param_Ef(ii);
     paramTemp.hop_probability = param_hop_probability(ii);
     
@@ -75,6 +77,7 @@ try
     Nt = 1e3;
     c = (Nt/1.66e6)^(1/3);
     paramTemp.c=c;
+    deltaT = paramTemp.deltaT;
     
     % Attempt to estimate Ef to produce a given kon
 %     kon = 1e-3;
@@ -88,11 +91,11 @@ try
     % set plot_flag to zero so lots of plots don't pop up.
     plot_flag = 0;
     
-    filestring=['Ef',num2str(paramTemp.Ef,'%.2f'),...
-      '_lc',num2str(paramTemp.lc,'%.0f'),...
-      '_konSite',num2str(paramTemp.konSite,'%.2f'),...
-      '_hopProb',num2str(paramTemp.hop_probability,'%.2f'),...
-      '_TrID', num2str(paramTemp.trID)];
+    filestring=['TrID', num2str(paramTemp.trID),...
+      '_Ef',num2str(paramTemp.Ef,'%.1f'),...
+      '_koff',num2str(paramTemp.koff,'%.3f'),...
+      '_kHop',num2str(paramTemp.kHop,'%.2f'),...
+      '_lc',num2str(paramTemp.lc,'%.0f')];
     filename=['data_',filestring,'.mat'];
     fprintf('%s\n',filename);
     
@@ -110,10 +113,15 @@ try
     % assumptions are being met properly, t1 should be much larger than t2.
     %  I'm not sure if I'm calculating t2 correctly, though.
     
-    deltaT = min([t1,t2,t3,10*t4])/10;
+    %deltaT = min([t1,t2,t3,10*t4])/10;
     disp([t1,t2,t3,t4]);
     disp(num2str(deltaT));
     paramTemp.deltaT = deltaT;
+    
+    % reset number of steps based on timestep
+    timesteps = round(5000/deltaT);
+    paramTemp.timesteps = timesteps;
+    disp(num2str(timesteps));
 
     %   Initialize x-array:
     %   Dimension 1 indexes the run number.
@@ -124,6 +132,8 @@ try
     boundRecord = zeros(runs, timesteps+1);
     unboundList = zeros(runs, timesteps+1);
     unboundRecord = zeros(runs, timesteps+1);
+    
+    steps = zeros(runs, timesteps); %remove after debugging
 
     % Loop over all runs.
     parfor i=1:runs
@@ -131,7 +141,7 @@ try
         rng('shuffle');
         %fprintf('for i = %d Rand num = %f \n', i, rand() );
         % Run hopping simulation and store results.
-        [ x, ~,~,~] = NumericalHoppingTether( paramTemp, plot_flag );
+        [ x, ~,~,step] = NumericalHoppingTether( paramTemp, plot_flag );
         all_x_output(i,:,:) = x;
         [~,br] = listBoundEvents(x);
         br(timesteps+1) = 0;
@@ -140,6 +150,7 @@ try
         unboundList(i,:) = unbound;
         ur(timesteps+1) = 0;
         unboundRecord(i,:) = ur;
+        steps(i,:) = step;
     end
     % Process the results.
     
@@ -193,15 +204,16 @@ try
     results.meanErr = meanErr;
     results.dtime = dtime;
     
-    t = param.deltaT*(1:timesteps/2);
-    results.Deff = meanMSD(1:end/2)./(2*t);
-    results.Derr = meanErr(1:end/2)./(2*t);
+    t = param.deltaT*(1:round(timesteps/2));
+    results.Deff = meanMSD(1:length(t))./(2*t);
+    results.Derr = meanErr(1:length(t))./(2*t);
 
     results.boundRecord = nonzeros(boundRecord);
     results.unboundRecord = nonzeros(unboundRecord);
     results.koffCalc = koff;
     results.konCalc = kon;
     results.pfCalc = pf;
+    results.steps = steps; %remove after debugging
     
     % Give some warnings about the time scales
     if results.Deff(1) > 1.5
