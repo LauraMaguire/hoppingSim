@@ -36,14 +36,15 @@ try
   disp(param);
   
   %build a parameter matrix - I think these are the ones that get varied
-  param_mat = combvec( param.lc, param.kHop, param.Ef, param.hop_probability );
+  param_mat = combvec( param.lc, param.kHop, param.Ef, param.koff, param.deltaT);
   [~,nparams] = size(param_mat);
   
   % For some reason, param_mat gets "sliced". Create vectors to get arround
   param_lc = param_mat(1,:);
   param_kHop = param_mat(2,:);
   param_Ef = param_mat(3,:);
-  param_hop_probability= param_mat(4,:);
+  param_koff= param_mat(4,:);
+  param_deltaT = param_mat(5,:);
   
   % print some stuff
   fprintf('Starting paramloop \n')
@@ -62,7 +63,8 @@ try
     paramTemp.lc = param_lc(ii);
     paramTemp.kHop = param_kHop(ii);
     paramTemp.Ef = param_Ef(ii);
-    paramTemp.hop_probability = param_hop_probability(ii);
+    paramTemp.koff = param_koff(ii);
+    paramTemp.deltaT = param_deltaT(ii);
     
     % calculate remaining parameters
     lp = param.lp;
@@ -95,8 +97,9 @@ try
       '_Ef',num2str(paramTemp.Ef,'%.1f'),...
       '_koff',num2str(paramTemp.koff,'%.3f'),...
       '_kHop',num2str(paramTemp.kHop,'%.2f'),...
+      '_dT_',num2str(paramTemp.deltaT, '%.3f'),...
       '_lc',num2str(paramTemp.lc,'%.0f')];
-    filename=['data_',filestring,'.mat'];
+    filename=[filestring,'.mat'];
     fprintf('%s\n',filename);
     
     % Set timescale (override deltaT input)
@@ -195,7 +198,7 @@ try
     % Take the mean MSD over all runs.
     meanMSD = mean(squeeze(msd(:,:,1)),1);
     meanErr = std(squeeze(msd(:,:,2)),1);
-    dtime = param.deltaT*(1:timesteps);
+    dtime = deltaT*(1:timesteps);
     %Deff = findHorztlAsymp(dtime(1:end/2),meanMSD(1:end/2),meanErr(1:end/2));
     
     % Make results structure
@@ -204,7 +207,7 @@ try
     results.meanErr = meanErr;
     results.dtime = dtime;
     
-    t = param.deltaT*(1:round(timesteps/2));
+    t = deltaT*(1:round(timesteps/2));
     results.Deff = meanMSD(1:length(t))./(2*t);
     results.Derr = meanErr(1:length(t))./(2*t);
 
@@ -229,7 +232,8 @@ try
     fileObj.paramOut = paramTemp;
     fileObj.results = results;
     movefile(filename,'./output');
-  end
+  end % end of loop over parameters
+  
   runTime = toc(RunTimeID);
   runHr = floor( runTime / 3600); runTime = runTime - runHr*3600;
   runMin = floor( runTime / 60);  runTime = runTime - runMin*60;

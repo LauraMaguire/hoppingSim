@@ -11,10 +11,10 @@ timesteps = params.timesteps;
 k = params.k;
 c = params.c;
 koff = params.koff;
-hop_probability = params.hop_probability; 
+%hop_probability = params.hop_probability; 
 kHop = params.kHop;  
 Ef = params.Ef; 
-right_probability = params.right_probability;
+%right_probability = params.right_probability;
 
 % Make a tether vector with randomly-spaced tethers from a continuous
 % uniform distribution.
