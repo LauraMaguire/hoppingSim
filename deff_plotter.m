@@ -24,3 +24,15 @@ plot(t5.results.dtime(1:length(t5.results.Deff)), t5.results.Deff);
 legend('0.005','0.01','0.02','0.001');
 %plot(tr5.results.dtime(1:end/8), tr5.results.Deff(1:end/4));
 %plot(tr6.results.dtime(1:end/32), tr6.results.Deff(1:end/16));
+%%
+figure
+hold all
+plot(t6.results.dtime, t6.results.meanMSD);
+plot(t7.results.dtime, t7.results.meanMSD);
+plot(t8.results.dtime, t8.results.meanMSD);
+
+% plot(tr3.results.dtime(1:end), tr3.results.meanMSD(1:end));
+% plot(tr4.results.dtime(1:end), tr4.results.meanMSD(1:end));
+legend('0.01','0.005','0.02');
+%plot(tr5.results.dtime(1:end/4), tr5.results.meanMSD(1:end/4));
+%plot(tr6.results.dtime(1:end/8), tr6.results.meanMSD(1:end/8));
