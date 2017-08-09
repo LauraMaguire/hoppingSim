@@ -120,7 +120,7 @@ for i=1:timesteps
     end
     % if particle has moved off the end of the map, put it back on the
     % other side
-    x(i+1,1) = wrap(x(i+1,1),L);
+    %x(i+1,1) = wrap(x(i+1,1),L);
     
 end
 
