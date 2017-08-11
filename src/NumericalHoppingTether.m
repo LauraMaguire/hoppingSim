@@ -1,4 +1,4 @@
-function [ x, tether_locations, Ecurrent,distances] = NumericalHoppingTether( params, plot_flag )
+function [ x, tether_locations] = NumericalHoppingTether( params, plot_flag )
 try
  
 % This code runs the simulation with a continuous model, taking in only
@@ -30,8 +30,8 @@ x = zeros(timesteps,2);
 x(1,:) = [L/2 0]; % start at the center.
 
 % intializing arrays for some diagnostic variables
-Ecurrent = zeros(timesteps,1); % can remove when lifetime problem is solved
-distances = zeros(timesteps,1);
+%Ecurrent = zeros(timesteps,1); % can remove when lifetime problem is solved
+%distances = zeros(timesteps,1);
 
 for i=1:timesteps
     randomNumber = rand;    
@@ -102,7 +102,7 @@ for i=1:timesteps
     % sigma corresponds to Gaussian solution to diffusion equation.
     sigma = sqrt(2*D*deltaT);
     step = normrnd(0,sigma);
-    distances(i) = step; %remove after debugging
+    %distances(i) = step; %remove after debugging
     if x(i+1,2) == 0 % unbound, accept move
         x(i+1,1) = x(i,1) + step;
     else % bound, move in a force-dependent way

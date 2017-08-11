@@ -36,3 +36,65 @@ plot(t8.results.dtime, t8.results.meanMSD);
 legend('0.01','0.005','0.02');
 %plot(tr5.results.dtime(1:end/4), tr5.results.meanMSD(1:end/4));
 %plot(tr6.results.dtime(1:end/8), tr6.results.meanMSD(1:end/8));
+
+%%
+
+d=dir('*');
+l = length(d);
+deff = cell(1,l-3);
+msd = cell(1,l-3);
+dt = zeros(1,l-3);
+kon = zeros(1,l-3);
+koff = zeros(1,l-3);
+deffCalc = zeros(1,l-3);
+kd = zeros(1,l-3);
+for k=4:l
+    fname=d(k-3).name;
+    data=load(fname);
+    deff{k-3} = data.results.Deff;
+    msd{k-3} = data.results.meanMSD;
+    dt(k-3) = data.paramOut.deltaT;
+    kon(k-3) = data.results.konCalc;
+    koff(k-3) = data.results.koffCalc;
+    deffCalc(k-3) = data.DeffCalc;
+    kd(k-3) = koff(k-3)/kon(k-3);
+end
+
+%%
+
+for k=1:8
+    l = length(deff{k});
+    tax = 1:l;
+    plot(dt(k)*tax,deff{k})
+    hold all
+end
+legend('show');
+
+%%
+windowSize = 5; 
+b = (1/windowSize)*ones(1,windowSize);
+a = 1;
+y = filter(b,a,deff{8});
+plot(y);
+
+%%
+s = diff(deff{8});
+y = s/dt(8);
+plot(y);
+hold all
+y2 = filter(b,a,y);
+plot(y2);
+
+%%
+x = linspace(0,0.4);
+plot(deffCalc,dRes,'bo');
+hold all
+plot(deffCalc(1:11),dRes(1:11),'ko');
+plot(x,x,'r-');
+
+%%
+x = linspace(0,0.4);
+plot(deffCalc,dRes,'bo');
+hold all
+plot(deffCalc([3,7,11,15]),dRes([3,7,11,15]),'ko');
+plot(x,x,'r-');

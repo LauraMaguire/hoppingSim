@@ -104,27 +104,27 @@ try
     
     % Set timescale (override deltaT input)
     % Timescale 1: diffusion between adjacent wells.
-    t1 = 1/(D*c^2);
-    % Timescale 2: diffusion from one side of well to another
-    t2 = 8*Ef/(k*D);
-    % Timescale 3: bound lifetime (1/koff)
-    t3 = 1/koff;
-    % Timescale 4: because the on probability keeps being larger than one
-    t4 = 1/(koff*exp(Ef)*(20*sqrt(2*Ef/k)));
-
-    % deltaT must be much smaller than each timescale.  If our other
-    % assumptions are being met properly, t1 should be much larger than t2.
-    %  I'm not sure if I'm calculating t2 correctly, though.
+%     t1 = 1/(D*c^2);
+%     % Timescale 2: diffusion from one side of well to another
+%     t2 = 8*Ef/(k*D);
+%     % Timescale 3: bound lifetime (1/koff)
+%     t3 = 1/koff;
+%     % Timescale 4: because the on probability keeps being larger than one
+%     t4 = 1/(koff*exp(Ef)*(20*sqrt(2*Ef/k)));
+% 
+%     % deltaT must be much smaller than each timescale.  If our other
+%     % assumptions are being met properly, t1 should be much larger than t2.
+%     %  I'm not sure if I'm calculating t2 correctly, though.
+%     
+%     %deltaT = min([t1,t2,t3,10*t4])/10;
+%     disp([t1,t2,t3,t4]);
+%     disp(num2str(deltaT));
+%     paramTemp.deltaT = deltaT;
     
-    %deltaT = min([t1,t2,t3,10*t4])/10;
-    disp([t1,t2,t3,t4]);
-    disp(num2str(deltaT));
-    paramTemp.deltaT = deltaT;
-    
-    % reset number of steps based on timestep
-    %timesteps = round(5000/deltaT);
-    paramTemp.timesteps = timesteps;
-    disp(num2str(timesteps));
+%     % reset number of steps based on timestep
+%     %timesteps = round(5000/deltaT);
+%     paramTemp.timesteps = timesteps;
+%     disp(num2str(timesteps));
 
     %   Initialize x-array:
     %   Dimension 1 indexes the run number.
@@ -135,8 +135,6 @@ try
     boundRecord = zeros(runs, timesteps+1);
     unboundList = zeros(runs, timesteps+1);
     unboundRecord = zeros(runs, timesteps+1);
-    
-    steps = zeros(runs, timesteps); %remove after debugging
 
     % Loop over all runs.
     parfor i=1:runs
@@ -144,7 +142,7 @@ try
         rng('shuffle');
         %fprintf('for i = %d Rand num = %f \n', i, rand() );
         % Run hopping simulation and store results.
-        [ x, ~,~,step] = NumericalHoppingTether( paramTemp, plot_flag );
+        [ x, ~] = NumericalHoppingTether( paramTemp, plot_flag );
         all_x_output(i,:,:) = x;
         [~,br] = listBoundEvents(x);
         br(timesteps+1) = 0;
@@ -153,7 +151,6 @@ try
         unboundList(i,:) = unbound;
         ur(timesteps+1) = 0;
         unboundRecord(i,:) = ur;
-        steps(i,:) = step;
     end
     % Process the results.
     
@@ -216,7 +213,6 @@ try
     results.koffCalc = koff;
     results.konCalc = kon;
     results.pfCalc = pf;
-    results.steps = steps; %remove after debugging
     
     % Give some warnings about the time scales
     if results.Deff(1) > 1.5
