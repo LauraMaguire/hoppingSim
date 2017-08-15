@@ -98,3 +98,12 @@ plot(deffCalc,dRes,'bo');
 hold all
 plot(deffCalc([3,7,11,15]),dRes([3,7,11,15]),'ko');
 plot(x,x,'r-');
+
+%%
+x = logspace(-1,0);
+h = errorbar(deffCalc,dRes,dErr, 'ko');
+set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
+%loglog(deffCalc,dRes,'ko');
+hold all
+plot(x,x,'r-');

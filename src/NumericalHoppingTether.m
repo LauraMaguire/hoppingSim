@@ -1,4 +1,4 @@
-function [ x, tether_locations] = NumericalHoppingTether( params, plot_flag )
+function [ x, tether_locations,hopCount,hopOverageCount] = NumericalHoppingTether( params, plot_flag )
 try
  
 % This code runs the simulation with a continuous model, taking in only
@@ -32,6 +32,8 @@ x(1,:) = [L/2 0]; % start at the center.
 % intializing arrays for some diagnostic variables
 %Ecurrent = zeros(timesteps,1); % can remove when lifetime problem is solved
 %distances = zeros(timesteps,1);
+hopCount = 0;
+hopOverageCount = 0;
 
 for i=1:timesteps
     randomNumber = rand;    
@@ -47,17 +49,26 @@ for i=1:timesteps
             
             % Calculate Delta G to hop between current tether and new
             % tether.
-            DeltaG = -(0.5*k*(wrapdistance(x(i,1),tether_locations(tetherIndex),L)^2 ...
+            DeltaG = (0.5*k*(wrapdistance(x(i,1),tether_locations(tetherIndex),L)^2 ...
                 -wrapdistance(x(i,1),tether_locations(x(i,2)),L)^2));
             
             % Calculate the probability of a hop.
-            kHop = kHop*length(nearbyIndices)*exp(-DeltaG/2);
-            probHop = kHop*deltaT;
+            kHopCurrent = kHop*length(nearbyIndices)*exp(-DeltaG/2);
+%             disp(['M = ' num2str(length(nearbyIndices))]);
+%             disp(['exp(-DG/2) = ' num2str(exp(-DeltaG/2))]);
+            probHop = kHopCurrent*deltaT;
             
             % Hop if needed, otherwise stay bound to original tether.
             if randomNumber < probOff +probHop
                 x(i+1,2) = tetherIndex;
-                disp('Hopping');
+%                 disp('Hopping');
+                hopCount = hopCount+1;
+                if (probOff+probHop) > 1
+%                   disp('probOff + probHop > 1');
+%                   disp(['probOff = ' num2str(probOff)]);
+%                   disp(['probHop = ' num2str(probHop)]);
+                    hopOverageCount = hopOverageCount+1;
+                end
             else
                 x(i+1,2) = x(i,2);
             end

@@ -71,8 +71,10 @@ try
     lc = paramTemp.lc;
     D = paramTemp.D;
     k = 3/(2*lc*lp);
-    Ef = paramTemp.Ef;
+    %Ef = paramTemp.Ef;
     koff = paramTemp.koff;
+    Ef = -2*log10(koff);
+    paramTemp.Ef = Ef;
     runs = paramTemp.runs;
     timesteps = paramTemp.timesteps;
     %Nt = 1.66e6*c^3; % tether concentration in uM
@@ -135,6 +137,8 @@ try
     boundRecord = zeros(runs, timesteps+1);
     unboundList = zeros(runs, timesteps+1);
     unboundRecord = zeros(runs, timesteps+1);
+    hopCount = zeros(1,runs);
+    hopOverageCount = zeros(1,runs);
 
     % Loop over all runs.
     parfor i=1:runs
@@ -142,7 +146,7 @@ try
         rng('shuffle');
         %fprintf('for i = %d Rand num = %f \n', i, rand() );
         % Run hopping simulation and store results.
-        [ x, ~] = NumericalHoppingTether( paramTemp, plot_flag );
+        [ x, ~,hc,hoc] = NumericalHoppingTether( paramTemp, plot_flag );
         all_x_output(i,:,:) = x;
         [~,br] = listBoundEvents(x);
         br(timesteps+1) = 0;
@@ -151,6 +155,8 @@ try
         unboundList(i,:) = unbound;
         ur(timesteps+1) = 0;
         unboundRecord(i,:) = ur;
+        hopCount(i) = hc;
+        hopOverageCount(i) = hoc;
     end
     % Process the results.
     
@@ -213,6 +219,9 @@ try
     results.koffCalc = koff;
     results.konCalc = kon;
     results.pfCalc = pf;
+    
+    results.hopFreq = mean(hopCount/timesteps);
+    results.hopOverageFreq = mean(hopOverageCount/timesteps);
     
     % Give some warnings about the time scales
     if results.Deff(1) > 1.5
