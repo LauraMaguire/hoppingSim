@@ -71,8 +71,10 @@ try
     lc = paramTemp.lc;
     D = paramTemp.D;
     k = 3/(2*lc*lp);
-    Ef = paramTemp.Ef;
+    %Ef = paramTemp.Ef;
     koff = paramTemp.koff;
+    Ef = 1.88*koff^(-0.168);
+    paramTemp.Ef = Ef;
     runs = paramTemp.runs;
     timesteps = paramTemp.timesteps;
     %Nt = 1.66e6*c^3; % tether concentration in uM

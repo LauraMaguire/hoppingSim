@@ -100,10 +100,38 @@ plot(deffCalc([3,7,11,15]),dRes([3,7,11,15]),'ko');
 plot(x,x,'r-');
 
 %%
-x = logspace(-1,0);
+x = logspace(-3,0);
 h = errorbar(deffCalc,dRes,dErr, 'ko');
 set(gca, 'XScale', 'log')
 set(gca, 'YScale', 'log')
 %loglog(deffCalc,dRes,'ko');
 hold all
 plot(x,x,'r-');
+%%
+x = logspace(-3,0);
+h = errorbar(kd,dRes,dErr, 'ko');
+set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
+%loglog(deffCalc,dRes,'ko');
+hold all
+%plot(x,x,'r-');
+
+%%
+figure
+%h = errorbar(r.kd,r.dPost,r.dErr, 'ko');
+set(gca, 'XScale', 'log')
+%set(gca, 'YScale', 'log')
+hold all
+
+hopValues = unique(r.khop);
+hop = cell(1,length(hopValues));
+for i=1:length(hopValues)
+    hop{i} = find(r.khop == hopValues(i));
+    leg{i} = num2str(hopValues(i));
+    errorbar(r.kd(hop{i}),r.dPost(hop{i}),r.dErr(hop{i}));
+end
+l = legend(leg,'Location','southwest');
+v = get(l,'title');
+set(v,'String','kHop')
+xlabel('K_D (uM)');
+ylabel('Deff / Dfree');
