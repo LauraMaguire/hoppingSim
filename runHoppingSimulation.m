@@ -220,8 +220,8 @@ try
     results.konCalc = kon;
     results.pfCalc = pf;
     
-    results.hopFreq = mean(hopCount/timesteps);
-    results.hopOverageFreq = mean(hopOverageCount/timesteps);
+    results.hopFreq = mean(hopCount/(timesteps-sum(sum(unboundList))));
+    results.hopOverageFreq = mean(hopOverageCount/(timesteps-sum(sum(unboundList))));
     
     % Give some warnings about the time scales
     if results.Deff(1) > 1.5
