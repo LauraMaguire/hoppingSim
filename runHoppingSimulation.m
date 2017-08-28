@@ -30,6 +30,9 @@ try
     initParam
   end
   load Params.mat;
+  if exist('Params.mat','file')==2
+    movefile('Params.mat','ParamsFinished.mat')
+  end
   
   %display everything
   fprintf('parameters read in\n');
@@ -246,7 +249,6 @@ try
   fprintf('RunTime: %.2d:%.2d:%.2d (hr:min:sec)\n', runHr, runMin,runSec);
   EndTime = datestr(now);
   fprintf('Completed run: %s\n',EndTime);
-  movefile('Params.mat','ParamsFinished.mat')
 catch err
   fprintf('%s',err.getReport('extended') );
   keyboard
