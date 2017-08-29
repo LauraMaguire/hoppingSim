@@ -128,10 +128,31 @@ hop = cell(1,length(hopValues));
 for i=1:length(hopValues)
     hop{i} = find(r.khop == hopValues(i));
     leg{i} = num2str(hopValues(i));
-    errorbar(r.kd(hop{i}),r.dPost(hop{i}),r.dErr(hop{i}));
+    errorbar(r.kd(hop{i}),r.dPost(hop{i}),r.dErr(hop{i}),'o');
 end
 l = legend(leg,'Location','southwest');
 v = get(l,'title');
 set(v,'String','kHop')
 xlabel('K_D (uM)');
 ylabel('Deff / Dfree');
+
+%%
+figure
+%h = errorbar(r.kd,r.dPost,r.dErr, 'ko');
+set(gca, 'XScale', 'log')
+%set(gca, 'YScale', 'log')
+hold all
+
+hopValues = unique(r.khop);
+hop = cell(1,length(hopValues));
+for i=1:length(hopValues)
+    hop{i} = find(r.khop == hopValues(i));
+    leg{i} = num2str(hopValues(i));
+    sel = results.bindFlux./results.nonbindFlux;
+    errorbar(r.kd(hop{i}),sel(hop{i}),r.dErr(hop{i}),'o');
+end
+l = legend(leg,'Location','southwest');
+v = get(l,'title');
+set(v,'String','kHop')
+xlabel('K_D (uM)');
+ylabel('Selectivity');

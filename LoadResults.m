@@ -1,7 +1,7 @@
 function r = LoadResults(plotFlag)
 % Loads all output .mat files from current folder.
 % Input: plotFlag - if 1, plots showing how effective diffusion coefficient
-% was calculated will remain after runnning.  If zeros, all plots will be
+% was calculated will remain after runnning.  If zero, all plots will be
 % closed after running.
 % Output: a structure containing many results in an easy format for
 % plotting.  Precise data contained in results structure may change as the
@@ -11,7 +11,7 @@ d=dir('*.mat'); % list all .mat files in current folder
 l = length(d); % count all files
 r = struct(); % initialize results structure
 
-r.d = cell(1,l); % cell array to hold Deff vectors
+r.dvec = cell(1,l); % cell array to hold Deff vectors
 r.msd = cell(1,l); % cell array to hold msd vectors
 r.dt = zeros(1,l); % for delta T parameter (size of timestep)
 r.kon = zeros(1,l); % for kon calculated after running
@@ -56,5 +56,6 @@ end
 if plotFlag == 0
     close all
 end
+r.names = d;
 
 end

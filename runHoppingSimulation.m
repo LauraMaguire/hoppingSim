@@ -224,7 +224,11 @@ try
     results.pfCalc = pf;
     
     results.hopFreq = mean(hopCount/(timesteps-sum(sum(unboundList))));
-    results.hopOverageFreq = mean(hopOverageCount/(timesteps-sum(sum(unboundList))));
+    if results.hopFreq ~= 0
+        results.hopOverageFreq = mean(hopOverageCount/hopCount);
+    else
+        results.hopOverageFreq = NaN;
+    end
     
     % Give some warnings about the time scales
     if results.Deff(1) > 1.5
