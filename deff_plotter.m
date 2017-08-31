@@ -133,8 +133,39 @@ end
 l = legend(leg,'Location','southwest');
 v = get(l,'title');
 set(v,'String','kHop')
-xlabel('K_D (uM)');
+xlabel('KD (uM)');
 ylabel('Deff / Dfree');
+
+x = logspace(-2,1);
+y = (1.*x.*1.*100)./(3.*1+x.*1.*100);
+semilogx(x,y);
+
+%%
+figure
+%h = errorbar(r.kd,r.dPost,r.dErr, 'ko');
+set(gca, 'XScale', 'log')
+set(gca, 'YScale', 'log')
+hold all
+
+hopValues = unique(r.khop);
+hop = cell(1,length(hopValues));
+for i=1:length(hopValues)
+    hop{i} = find(r.khop == hopValues(i));
+    leg{i} = num2str(hopValues(i));
+    errorbar(r.koff(hop{i}),r.dBound(hop{i}),r.dErr(hop{i}),'o');
+end
+leg{i+1} = 'Analytic Model';
+xlabel('koff (us^-1)');
+ylabel('Dbound / Dfree');
+
+x = logspace(-5,-2);
+y = (1.*x.*1.*100)./(3.*1+x.*1.*100);
+semilogx(x,y);
+
+l = legend(leg,'Location','southeast');
+v = get(l,'title');
+set(v,'String','kHop')
+
 
 %%
 figure
@@ -149,10 +180,46 @@ for i=1:length(hopValues)
     hop{i} = find(r.khop == hopValues(i));
     leg{i} = num2str(hopValues(i));
     sel = results.bindFlux./results.nonbindFlux;
-    errorbar(r.kd(hop{i}),sel(hop{i}),r.dErr(hop{i}),'o');
+    errorbar(r.koff(hop{i}),sel(hop{i}),r.dErr(hop{i}),'o');
 end
+
+semilogx(x,analyticFlux/.2);
 l = legend(leg,'Location','southwest');
 v = get(l,'title');
 set(v,'String','kHop')
-xlabel('K_D (uM)');
+xlabel('koff (us^-1)');
 ylabel('Selectivity');
+
+
+%%
+
+x=logspace(-5,-2);
+p = struct();
+p.AB = 20;
+p.L = 100;
+p.Nt = 1e3;
+p.ll=100;
+p.DF = 1;
+p.kon = 1e-3;
+
+disp('Entering loop');
+for j=1:length(x)
+    p.koff = x(j);
+    disp(num2str(j));
+    y(j) = subNum(p,1);
+end
+
+%%
+x=logspace(-5,-2);
+p = struct();
+p.AB = 20;
+p.L = 100;
+p.Nt = 1e3;
+p.ll=100;
+p.DF = 1;
+p.kon = 0;
+p.koff = 0.01;
+
+nobind = subNum(p,1);
+
+
