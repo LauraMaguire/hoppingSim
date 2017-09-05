@@ -223,7 +223,7 @@ try
     results.konCalc = kon;
     results.pfCalc = pf;
     
-    results.hopFreq = mean(hopCount/(timesteps-sum(sum(unboundList))));
+    results.hopFreq = sum(hopCount)/sum(results.boundRecord);
     if results.hopFreq ~= 0
         results.hopOverageFreq = mean(hopOverageCount/hopCount);
     else

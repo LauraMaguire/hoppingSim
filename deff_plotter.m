@@ -86,29 +86,29 @@ y2 = filter(b,a,y);
 plot(y2);
 
 %%
-x = linspace(0,0.4);
+xx = linspace(0,0.4);
 plot(deffCalc,dRes,'bo');
 hold all
 plot(deffCalc(1:11),dRes(1:11),'ko');
-plot(x,x,'r-');
+plot(xx,xx,'r-');
 
 %%
-x = linspace(0,0.4);
+xx = linspace(0,0.4);
 plot(deffCalc,dRes,'bo');
 hold all
 plot(deffCalc([3,7,11,15]),dRes([3,7,11,15]),'ko');
-plot(x,x,'r-');
+plot(xx,xx,'r-');
 
 %%
-x = logspace(-3,0);
+xx = logspace(-3,0);
 h = errorbar(deffCalc,dRes,dErr, 'ko');
 set(gca, 'XScale', 'log')
 set(gca, 'YScale', 'log')
 %loglog(deffCalc,dRes,'ko');
 hold all
-plot(x,x,'r-');
+plot(xx,xx,'r-');
 %%
-x = logspace(-3,0);
+xx = logspace(-3,0);
 h = errorbar(kd,dRes,dErr, 'ko');
 set(gca, 'XScale', 'log')
 set(gca, 'YScale', 'log')
@@ -136,9 +136,9 @@ set(v,'String','kHop')
 xlabel('KD (uM)');
 ylabel('Deff / Dfree');
 
-x = logspace(-2,1);
-y = (1.*x.*1.*100)./(3.*1+x.*1.*100);
-semilogx(x,y);
+xx = logspace(-2,1);
+y = (1.*xx.*1.*100)./(3.*1+xx.*1.*100);
+semilogx(xx,y);
 
 %%
 figure
@@ -158,9 +158,9 @@ leg{i+1} = 'Analytic Model';
 xlabel('koff (us^-1)');
 ylabel('Dbound / Dfree');
 
-x = logspace(-5,-2);
-y = (1.*x.*1.*100)./(3.*1+x.*1.*100);
-semilogx(x,y);
+xx = logspace(-5,-2);
+y = (1.*xx.*1.*100)./(3.*1+xx.*1.*100);
+semilogx(xx,y);
 
 l = legend(leg,'Location','southeast');
 v = get(l,'title');
@@ -183,7 +183,7 @@ for i=1:length(hopValues)
     errorbar(r.koff(hop{i}),sel(hop{i}),r.dErr(hop{i}),'o');
 end
 
-semilogx(x,analyticFlux/.2);
+semilogx(xx,y./nb);
 l = legend(leg,'Location','southwest');
 v = get(l,'title');
 set(v,'String','kHop')
@@ -193,7 +193,7 @@ ylabel('Selectivity');
 
 %%
 
-x=logspace(-5,-2);
+xx=logspace(-5,-1,30);
 p = struct();
 p.AB = 20;
 p.L = 100;
@@ -203,23 +203,8 @@ p.DF = 1;
 p.kon = 1e-3;
 
 disp('Entering loop');
-for j=1:length(x)
-    p.koff = x(j);
+for j=1:length(xx)
+    p.koff = xx(j);
     disp(num2str(j));
-    y(j) = subNum(p,1);
+    [y(j), nb(j)] = subNum(p,1);
 end
-
-%%
-x=logspace(-5,-2);
-p = struct();
-p.AB = 20;
-p.L = 100;
-p.Nt = 1e3;
-p.ll=100;
-p.DF = 1;
-p.kon = 0;
-p.koff = 0.01;
-
-nobind = subNum(p,1);
-
-
