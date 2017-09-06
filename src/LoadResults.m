@@ -24,6 +24,7 @@ r.dErr = zeros(1,l); % for error in calculated Deff
 r.db = zeros(1,l);
 r.hopFreq = zeros(1,l);
 r.hopOverageFreq = zeros(1,l); % for hopping overage frequency
+r.onOverageCount = zeros(1,l); % for on-rate overage count
 
 r.params = cell(1,l); % for parameters needed for flux calculation
 for k=1:l
@@ -43,7 +44,13 @@ for k=1:l
     if isfield(data.results,'hopOverageFreq')
         r.hopOverageFreq(k) = data.results.hopOverageFreq;
     else
-        r.hopOverageFreq(k) = 0;
+        r.hopOverageFreq(k) = NaN;
+    end
+    
+    if isfield(data.results,'onOverageCount')
+        r.onOverageCount(k) = data.results.onOverageCount;
+    else
+        r.onOverageCount(k) = NaN;
     end
     
     % Extract bound diffusion coefficient from dPost.

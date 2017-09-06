@@ -1,4 +1,4 @@
-function [ x, tether_locations,hopCount,hopOverageCount] = NumericalHoppingTether( params, plot_flag )
+function [ x, tether_locations,hopCount,hopOverageCount, onOverage] = NumericalHoppingTether( params, plot_flag )
 try
  
 % This code runs the simulation with a continuous model, taking in only
@@ -34,6 +34,7 @@ x(1,:) = [L/2 0]; % start at the center.
 %distances = zeros(timesteps,1);
 hopCount = 0;
 hopOverageCount = 0;
+onOverage = 0;
 
 for i=1:timesteps
     randomNumber = rand;    
@@ -98,6 +99,9 @@ for i=1:timesteps
     
         if randomNumber < onProb % accept binding to new tether
             x(i+1,2) = tetherIndex;
+            if onProb > 1
+                onOverage = onOverage+1;
+            end
         else % rejected the move, so stay where you are
             x(i+1,2) = x(i,2);
         end

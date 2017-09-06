@@ -142,6 +142,7 @@ try
     unboundRecord = zeros(runs, timesteps+1);
     hopCount = zeros(1,runs);
     hopOverageCount = zeros(1,runs);
+    onOverageCount = zeros(1,runs);
 
     % Loop over all runs.
     parfor i=1:runs
@@ -149,7 +150,7 @@ try
         rng('shuffle');
         %fprintf('for i = %d Rand num = %f \n', i, rand() );
         % Run hopping simulation and store results.
-        [ x, ~,hc,hoc] = NumericalHoppingTether( paramTemp, plot_flag );
+        [ x, ~,hc,hoc,oo] = NumericalHoppingTether( paramTemp, plot_flag );
         all_x_output(i,:,:) = x;
         [~,br] = listBoundEvents(x);
         br(timesteps+1) = 0;
@@ -160,6 +161,7 @@ try
         unboundRecord(i,:) = ur;
         hopCount(i) = hc;
         hopOverageCount(i) = hoc;
+        onOverageCount(i) = oo;
     end
     % Process the results.
     
@@ -229,6 +231,9 @@ try
     else
         results.hopOverageFreq = NaN;
     end
+    
+    % shows number of timesteps that binding happened with onProb > 1
+    results.onOverageCount = onOverageCount;
     
     % Give some warnings about the time scales
     if results.Deff(1) > 1.5
