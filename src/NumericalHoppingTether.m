@@ -1,6 +1,6 @@
 function [ x, tether_locations,hopCount,hopOverageCount, onOverage] = NumericalHoppingTether( params, plot_flag )
 try
- 
+% currently hard-coded for koff=0!
 % This code runs the simulation with a continuous model, taking in only
 % non-dimensional parameters.
 
@@ -10,7 +10,8 @@ deltaT = params.deltaT;
 timesteps = params.timesteps;
 k = params.k;
 c = params.c;
-koff = params.koff;
+%koff = params.koff;
+koff = 0;
 %hop_probability = params.hop_probability; 
 kHop = params.kHop;  
 Ef = params.Ef; 
@@ -90,7 +91,7 @@ for i=1:timesteps
         % Calculate probability of binding to nearest tether:
         %konCurrent = konSite*exp(-DeltaG)/denominator;
         konCurrent = koff*length(nearbyIndices)*exp(-DeltaG);
-        onProb = konCurrent*deltaT;
+        onProb = 1;%konCurrent*deltaT;
         if onProb > 1
             disp('onProb greater than one');
             disp(['konCurrent = ' num2str(konCurrent)]);
@@ -126,16 +127,9 @@ for i=1:timesteps
         %dispFromCenter = 0; % remove after debugging!
         % incorporate a term based on spring force.
         x(i+1,1) = x(i,1)-D*k*dispFromCenter*deltaT + step;
-        %Don't think I need the following section anymore.
-%         if rand < right_probability % move to the right.
-%             x(i+1,1) = x(i,1)-D*k*dispFromCenter*deltaT + step;
-%         else % or to the left.
-%             x(i+1,1) = x(i,1)-D*k*dispFromCenter*deltaT - step;
-%         end
+
+        
     end
-    % if particle has moved off the end of the map, put it back on the
-    % other side
-    %x(i+1,1) = wrap(x(i+1,1),L);
     
 end
 

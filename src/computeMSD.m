@@ -30,7 +30,7 @@ parfor dt = 1:number_delta_t
     index_start = nStartPoss( randInd );
     index_end = index_start + dt;
   else
-    nEndPoss = number_timepnts : -dt : 1 + dt
+    nEndPoss = number_timepnts : -dt : 1 + dt;
     randInd = randperm( NwMax, min(NwMax,maxpts_msd) );
     index_end = nEndPoss(randInd);
     index_start = index_end - dt;
@@ -50,6 +50,6 @@ parfor dt = 1:number_delta_t
   else
     msd(dt,:) = [mean(squared_dis(:)); ... % average
       std(squared_dis(:)); ...; % std
-      length(squared_dis(:)) ]'
+      length(squared_dis(:)) ]';
   end
 end
