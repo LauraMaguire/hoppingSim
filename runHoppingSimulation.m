@@ -1,40 +1,14 @@
-% runHoppingSimulation()
-% Description: executeable that calls main body of model diffusion_model
-% Program calls loads parameter file or calls initial parameter file if one
-% doesn't exist yet, sets up parallelization, and moves outputs
-%
-
-% Current problems:
-% The script to find horizontal asymptotes doesn't work.
-% Effective diffusion coefficient is wrong.
-% Average bound lifetime is wrong (80 when it should be 100, 580 when it
-% should be 1000).
-% Actual simulated bound particle energy doesn't match the predicted value,
-% and the mean distance from the tether's center is too large.  Hopefully
-% fixing this problem will fix the two above problems as well.
-
-% Things I've fixed/tried:
-% Changed random number generation to fix problem with noise.  Difficult to
-% check - will look out for issue in the future.
-% Fixed wrapdistance error and tested.
-% Fixed tether location error and tested.
-% Checked that Deff = 1 for no-hopping, no-binding case.
-% Fixed error leading to superdiffusive behavior - now randomly picks
-% between two equidistant tethers.
-% Average particle energy is very close when calculated two different ways.
-% Differences are probably due to discrete vs continuous calculations.
-% Changed limits of integration on stat mech calculation.
-% Wrote a function to calculate Zb and Eb numerically.
-
-% Things to try: 
-% Run through conversion scheme carefully.
-% Think physically about why Eb is coming up as 1/2 all the time.
-% Check that eCurrent calculator is working properly.
-% Redo entire analytical calculation in Matlab to eliminate algebra errors.
-
-
 function runHoppingSimulation()
 try
+    
+% Things that need doing:
+% Why is MSD proportional to time step?
+%   - free diffusion is fine regardless of timestep
+%   - diffusion with binding is fine if I remove force-dependent term
+%   - seems to be fine once I fixed the hopping bug - why?
+% Refine good timestep range and calculation.
+% Write a better wrapped displacement finder.
+
   addpath('./src');
   StartTime = datestr(now);
   currentdir=pwd;
@@ -56,18 +30,24 @@ try
     initParam
   end
   load Params.mat;
+  if exist('Params.mat','file')==2
+    movefile('Params.mat','ParamsFinished.mat')
+  end
   
   %display everything
   fprintf('parameters read in\n');
   disp(param);
   
   %build a parameter matrix - I think these are the ones that get varied
-  param_mat = combvec( param.koff, param.lc );
+  param_mat = combvec( param.lc, param.kHop, param.Ef, param.koff, param.deltaT);
   [~,nparams] = size(param_mat);
   
   % For some reason, param_mat gets "sliced". Create vectors to get arround
-  param_koff = param_mat(1,:);
-  param_lc = param_mat(2,:);
+  param_lc = param_mat(1,:);
+  param_kHop = param_mat(2,:);
+  param_Ef = param_mat(3,:);
+  param_koff= param_mat(4,:);
+  param_deltaT = param_mat(5,:);
   
   % print some stuff
   fprintf('Starting paramloop \n')
@@ -82,69 +62,135 @@ try
     fprintf('for ii = %d Rand num = %f \n', ii, rand() );
     
     % assign temp variables
-    
     paramTemp = param;
-    paramTemp.koff = param_koff(ii);
     paramTemp.lc = param_lc(ii);
+    paramTemp.kHop = param_kHop(ii);
+    paramTemp.Ef = param_Ef(ii);
+    paramTemp.koff = param_koff(ii);
+    paramTemp.deltaT = param_deltaT(ii);
     
-    paramTemp.Kd = paramTemp.koff/paramTemp.kon; % in uM
-    paramTemp.Df = paramTemp.a^2/paramTemp.tau; % in nm^2/s
-    paramTemp.pf = (1+paramTemp.Nt/paramTemp.Kd)^(-1); % free probability
-    paramTemp.Db_theo = paramTemp.Df*paramTemp.koff*paramTemp.lc*paramTemp.lp/...
-        (paramTemp.koff*paramTemp.lc*paramTemp.lp + 3*paramTemp.Df); % theoretical bound diffusion coefficient
-    paramTemp.Deff_theo = paramTemp.pf*paramTemp.Df + (1-paramTemp.pf)*paramTemp.Db_theo; % theoretical effective diffusion
+    % calculate remaining parameters
+    lp = param.lp;
+    lc = paramTemp.lc;
+    D = paramTemp.D;
+    k = 3/(2*lc*lp);
+    %Ef = paramTemp.Ef;
+    koff = paramTemp.koff;
+    Ef = 1.88*koff^(-0.168);
+    paramTemp.Ef = Ef;
+    runs = paramTemp.runs;
+    timesteps = paramTemp.timesteps;
+    %Nt = 1.66e6*c^3; % tether concentration in uM
+    Nt = 1e3;
+    c = (Nt/1.66e6)^(1/3);
+    paramTemp.c=c;
+    deltaT = paramTemp.deltaT;
     
-    paramTemp.c = paramTemp.a*(paramTemp.Nt*1e-6/1.66)^(1/3); % fraction of lattice sites with tether attachment point
-    paramTemp.k = (3*paramTemp.a^2)/(2*paramTemp.lc*paramTemp.lp); % n.d. spring constant
-    %paramTemp.nu = sqrt(pi/(2*paramTemp.k))*erf((1/(2*paramTemp.c))*sqrt(paramTemp.k/2)); % handy constant
-    paramTemp.nu = sqrt(2*pi/(paramTemp.k)); % handy constant
-    paramTemp.Ef = -log((2*paramTemp.c*paramTemp.Kd/paramTemp.Nt)*paramTemp.nu); % n.d. energy of a free particle (divided by thermal energy)
-    %paramTemp.Eb = (1./(2.*paramTemp.c.*paramTemp.nu)).*(paramTemp.c.*paramTemp.nu-exp(-paramTemp.k./(8.*paramTemp.c.^2))./2); % n.d. avg. energy of a bound particle
-    paramTemp.Eb = 0.5;
-    paramTemp.Zf = paramTemp.N.*exp(-paramTemp.Ef); % free partition function
-    paramTemp.Zb = paramTemp.N.*paramTemp.c.*paramTemp.nu; % bound partition function
+    % Attempt to estimate Ef to produce a given kon
+%     kon = 1e-3;
+%     Ef = 0.5*lambertw(2*(kon*k/(20*sqrt(2)*koff))^2);
+%     paramTemp.Ef = Ef;
     
-    paramTemp.Z = paramTemp.Zf+paramTemp.Zb; % total partition function
+    % make sure all parameters are recorded
+    paramTemp.Nt = Nt;
+    paramTemp.k = k;
     
-    paramTemp.binding_energy = paramTemp.Ef;
-    paramTemp.binding_rate = paramTemp.koff.*paramTemp.tau.*exp(paramTemp.Ef-paramTemp.Eb); % binding/unbinding attempt rate (should always be 1?)
-    
+    % set plot_flag to zero so lots of plots don't pop up.
     plot_flag = 0;
     
-    filestring=['Kd',num2str(paramTemp.Kd,'%.3f'),...
-      '_lc',num2str(paramTemp.lc,'%.0f'),...
-      '_Nt',num2str(paramTemp.Nt,'%.0f'),...
-      '_hopProb',num2str(paramTemp.hop_probability,'%.2f') ];
-    filename=['data_',filestring,'.mat'];
+    filestring=['TrID', num2str(paramTemp.trID),...
+      '_Ef',num2str(paramTemp.Ef,'%.1f'),...
+      '_koff',num2str(paramTemp.koff,'%.2e'),...
+      '_kHop',num2str(paramTemp.kHop,'%.2f'),...
+      '_dT_',num2str(paramTemp.deltaT, '%.3f'),...
+      '_lc',num2str(paramTemp.lc,'%.0f')];
+    filename=[filestring,'.mat'];
     fprintf('%s\n',filename);
+    
+    % Set timescale (override deltaT input)
+    % Timescale 1: diffusion between adjacent wells.
+%     t1 = 1/(D*c^2);
+%     % Timescale 2: diffusion from one side of well to another
+%     t2 = 8*Ef/(k*D);
+%     % Timescale 3: bound lifetime (1/koff)
+%     t3 = 1/koff;
+%     % Timescale 4: because the on probability keeps being larger than one
+%     t4 = 1/(koff*exp(Ef)*(20*sqrt(2*Ef/k)));
+% 
+%     % deltaT must be much smaller than each timescale.  If our other
+%     % assumptions are being met properly, t1 should be much larger than t2.
+%     %  I'm not sure if I'm calculating t2 correctly, though.
+%     
+%     %deltaT = min([t1,t2,t3,10*t4])/10;
+%     disp([t1,t2,t3,t4]);
+%     disp(num2str(deltaT));
+%     paramTemp.deltaT = deltaT;
+    
+%     % reset number of steps based on timestep
+%     %timesteps = round(5000/deltaT);
+%     paramTemp.timesteps = timesteps;
+%     disp(num2str(timesteps));
 
     %   Initialize x-array:
     %   Dimension 1 indexes the run number.
     %   Dimension 2 indexes the timestep.
     %   Dimension 3 gives (1) the position and (2) the tether location, if
     %   bound to a tether.  If unbound, (2) is zero.
-    all_x_output = zeros(paramTemp.runs,paramTemp.timesteps+1,2);
-    lifetimeList = zeros(1,paramTemp.runs);
-    eCurrent = zeros(paramTemp.runs, paramTemp.timesteps);
-    distList = zeros(paramTemp.runs, paramTemp.timesteps);
+    all_x_output = zeros(runs,timesteps+1,2);
+    boundRecord = zeros(runs, timesteps+1);
+    unboundList = zeros(runs, timesteps+1);
+    unboundRecord = zeros(runs, timesteps+1);
+    hopCount = zeros(1,runs);
+    hopOverageCount = zeros(1,runs);
+    onOverageCount = zeros(1,runs);
+
     % Loop over all runs.
-    parfor i=1:paramTemp.runs
+    parfor i=1:runs
         pause(i/100); % pause for i/100 seconds
         rng('shuffle');
-        %fprintf('for i = %d Rand num = %f \n', ii, rand() );
+        %fprintf('for i = %d Rand num = %f \n', i, rand() );
         % Run hopping simulation and store results.
-        % tether_locs is an array giving the tether location for each tether.
-        [ x, ~,eCurrent(i,:),distList(i,:)] = NumericalHoppingTether( paramTemp, plot_flag );
+        [ x, ~,hc,hoc,oo] = NumericalHoppingTether( paramTemp, plot_flag );
         all_x_output(i,:,:) = x;
-        [~,~,lifetimeList(i)] = LifetimeCalculator(x);
+        [~,br] = listBoundEvents(x);
+        br(timesteps+1) = 0;
+        boundRecord(i,:) = br;
+        [unbound,ur] = listUnboundEvents(x);
+        unboundList(i,:) = unbound;
+        ur(timesteps+1) = 0;
+        unboundRecord(i,:) = ur;
+        hopCount(i) = hc;
+        hopOverageCount(i) = hoc;
+        onOverageCount(i) = oo;
     end
     % Process the results.
-    % Re-format x-array so that Mike's MSD calculator can use it.
+    
+    % Calculate koff (units of us^-1)
+    boundRecord = nonzeros(boundRecord);
+    if length(boundRecord) > 50
+        [fit, ~] = ExpFit(boundRecord,deltaT);
+        koff = -fit.b;
+    else
+        koff = 0;
+    end
+    
+    % Calculate kon (units of us^-1 uM^-1)
+    unboundRecord = nonzeros(unboundRecord);
+    if length(unboundRecord) > 50
+        [fit, ~] = ExpFit(unboundRecord,deltaT);
+        kon = -fit.b/Nt;
+    else
+        kon = 0;
+    end
+    close all
+    
+    % Calculate pf, fraction of time spent free
+    pf = sum(sum(unboundList))/(runs*timesteps);
+    
+    % Reformat the position results to calculate msd.
     xx=zeros(1,paramTemp.runs,paramTemp.timesteps+1);
-    lr = zeros(1,paramTemp.runs);
     for i=1:paramTemp.runs
         xx(1,i,:) = all_x_output(i,:,1);
-        lr(i) = sign(xx(1,i,1)-xx(1,i,end));
     end
 
     % Initialize the msd-array.
@@ -158,25 +204,58 @@ try
         [msd(i,:,:),~] = computeMSD(xx(1,i,:), min(1e5,timesteps), 0, 1);
     end
     % Take the mean MSD over all runs.
-    meanMSD = mean(squeeze(msd(:,:,1)),1);
-    meanErr = std(squeeze(msd(:,:,2)),1);
+    if param.runs>1
+        meanMSD = mean(squeeze(msd(:,:,1)),1);
+        meanErr = std(squeeze(msd(:,:,2)),1);
+    else
+        meanMSD = squeeze(msd(:,:,1));
+        meanErr = zeros(1,timesteps+1);
+    end
+    dtime = deltaT*(1:timesteps);
+    %Deff = findHorztlAsymp(dtime(1:end/2),meanMSD(1:end/2),meanErr(1:end/2));
     
+    % Make results structure
+    results = struct();
+    results.meanMSD = meanMSD;
+    results.meanErr = meanErr;
+    results.dtime = dtime;
+    
+    t = deltaT*(1:round(timesteps/2));
+    results.Deff = meanMSD(1:length(t))./(2*t);
+    results.Derr = meanErr(1:length(t))./(2*t);
+
+    results.boundRecord = nonzeros(boundRecord);
+    results.unboundRecord = nonzeros(unboundRecord);
+    results.koffCalc = koff;
+    results.konCalc = kon;
+    results.pfCalc = pf;
+    
+    results.hopFreq = sum(hopCount)/sum(results.boundRecord);
+    if results.hopFreq ~= 0
+        results.hopOverageFreq = mean(hopOverageCount/hopCount);
+    else
+        results.hopOverageFreq = NaN;
+    end
+    
+    % shows number of timesteps that binding happened with onProb > 1
+    results.onOverageCount = onOverageCount;
+    
+    % Give some warnings about the time scales
+    if results.Deff(1) > 1.5
+        disp('Check time scale: Deff > 1.5 at t=0.');
+    elseif results.Deff(1) < 0.1
+        disp('Check time scale: Deff < 0.1 at t=0.');
+    end
+
     % Save the important results in a .mat file in output directory.
     fileObj = matfile(filename,'Writable',true);
-    fileObj.meanMSD = meanMSD;
-    fileObj.meanErr = meanErr;
-    fileObj.dtime = 1:timesteps;
-    fileObj.t = 1:timesteps/2;
-    fileObj.Deff = meanMSD(1:end/2)./fileObj.t;
-    fileObj.Derr = meanErr(1:end/2)./fileObj.t;
-    fileObj.param = param;
-    fileObj.paramTemp = paramTemp;
-    fileObj.lr = lr;
-    fileObj.lifetimeList = lifetimeList;
-    fileObj.eCurrent = eCurrent;
-    fileObj.distList = distList;
-    movefile(filename,'./output'); %why is this giving an error?
-  end
+    fileObj.DeffCalc = (pf*D)+(1-pf)*(koff*lc*lp*D)/(3*D+koff*lc*lp);
+    fileObj.paramIn = param;
+    fileObj.paramOut = paramTemp;
+    fileObj.results = results;
+    movefile(filename,'./output');
+  end % end of loop over parameters
+  
   runTime = toc(RunTimeID);
   runHr = floor( runTime / 3600); runTime = runTime - runHr*3600;
   runMin = floor( runTime / 60);  runTime = runTime - runMin*60;
@@ -184,7 +263,6 @@ try
   fprintf('RunTime: %.2d:%.2d:%.2d (hr:min:sec)\n', runHr, runMin,runSec);
   EndTime = datestr(now);
   fprintf('Completed run: %s\n',EndTime);
-  movefile('Params.mat','ParamsFinished.mat')
 catch err
   fprintf('%s',err.getReport('extended') );
   keyboard

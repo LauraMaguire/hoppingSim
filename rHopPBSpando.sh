@@ -21,7 +21,7 @@
 # Note: group all PBS directives at the beginning of your script.
 # Any directives placed after the first shell command will be ignored.
 
-### Use the bourne shell
+### use the bourne shell
 #PBS -S /bin/bash
 
 ### Remove only the three initial "#" characters before #PBS
@@ -29,8 +29,8 @@
 
 ### Optionally set the destination for your program's output
 ### Specify localhost and an NFS filesystem to prevent file copy errors.
-#PBS -e /Users/mist7261/McHydro/eo/
-#PBS -o /Users/mist7261/McHydro/eo/
+#PBS -e /Users/lama9111/hoppingSim/eo/
+#PBS -o /Users/lama9111/hoppingSim/eo/
 
 ### Specify the number of cpus for your job.  This example will allocate 4 cores
 ### using 2 processors on each of 2 nodes.

@@ -1,21 +1,16 @@
-function [boundOrNot, bindingRecord, lifetime] = LifetimeCalculator(x)
-% Calculate average bound lifetime after a single run.  Input the x-vector
-% that comes out of NumericalHoppingTether.  Outputs: (1) a vector
-% running over all timesteps and containing a 1 if the particle is bound
-% and a 0 if not, (2) a vector listing the length of each binding
-% event (length of record vector will vary depending on the number of
-% binding events) and (3) lifetime, the average length of a binding event.
+function [boundOrNot, bindingRecord] = koffCalculator(x)
+% Calculates macroscopic kon in units of per molarity per time.
 
 % remove position information from x vectors, leaving only tether info
 tetherInfo = squeeze(x(:,2).');
-% initialize vector to contain a 1 if bound and 0 if not
+% initialize vector
 boundOrNot = zeros(1, size(x,1));
-% Loop over all timesteps to fill in boundOrNot
+% Loop over all timesteps to fill in unboundOrNot
 for step=1:size(x,1)
     tetherLocation = tetherInfo(step);
-    if tetherLocation==0
+    if tetherLocation==0 % fill in a zero if unbound
         boundOrNot(step) = 0;
-    else
+    else % fill in a one if bound
         boundOrNot(step) = 1;
     end
 end
@@ -27,13 +22,14 @@ runningLengthCounter = 0;
 
 % Loop over all but the first timestep to find the number and length of
 % binding events.  Note that particle is always unbound on the first
-% timestep.
+% timestep. Ignore first timestep; negligible overall.
 for step=2:size(x,1)
-    % add to the running count if the particle is bound
+    % add to the running count if the particle is unbound
     if boundOrNot(step)==1
         runningLengthCounter = runningLengthCounter+1;
     end
-    % enter this loop if ending a binding event (go from bound to unbound)
+    % enter this loop if beginning a binding event (go from unbound to
+    % bound)
     if (boundOrNot(step)==0) && (boundOrNot(step-1)==1)
         % add an event to the counter
         eventCounter = eventCounter+1;
@@ -44,12 +40,9 @@ for step=2:size(x,1)
     end
 end
 % After looping through timesteps, set bindingRecord to zero if no
-% unbinding events ever occurred.
+% binding events ever occurred.
 if eventCounter==0
     bindingRecord=0;
 end
-
-[fit, ~] = ExpFit(bindingRecord);
-lifetime = -1/fit.b;
 
 end
