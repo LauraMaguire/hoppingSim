@@ -1,13 +1,5 @@
 function runHoppingSimulation()
 try
-    
-% Things that need doing:
-% Why is MSD proportional to time step?
-%   - free diffusion is fine regardless of timestep
-%   - diffusion with binding is fine if I remove force-dependent term
-%   - seems to be fine once I fixed the hopping bug - why?
-% Refine good timestep range and calculation.
-% Write a better wrapped displacement finder.
 
   addpath('./src');
   StartTime = datestr(now);
@@ -150,7 +142,7 @@ try
         rng('shuffle');
         %fprintf('for i = %d Rand num = %f \n', i, rand() );
         % Run hopping simulation and store results.
-        [ x, ~,hc,hoc,oo] = NumericalHoppingTether( paramTemp, plot_flag );
+        [ x, ~,hc,hoc,oo] = NumericalHoppingTetherTest( paramTemp, plot_flag );% change back after testing!
         all_x_output(i,:,:) = x;
         [~,br] = listBoundEvents(x);
         br(timesteps+1) = 0;

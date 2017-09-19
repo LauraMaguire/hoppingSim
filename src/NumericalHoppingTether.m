@@ -118,7 +118,7 @@ for i=1:timesteps
     % sigma corresponds to Gaussian solution to diffusion equation.
     sigma = sqrt(2*D*deltaT);
     step = normrnd(0,sigma);
-    %distances(i) = step; %remove after debugging
+%    x(i+1,1) = x(i,1) + step; % remove to allow k not equal zero!
     if x(i+1,2) == 0 % unbound, accept move
         x(i+1,1) = x(i,1) + step;
     else % bound, move in a force-dependent way
@@ -127,8 +127,6 @@ for i=1:timesteps
         %dispFromCenter = 0; % remove after debugging!
         % incorporate a term based on spring force.
         x(i+1,1) = x(i,1)-D*k*dispFromCenter*deltaT + step;
-
-        
     end
     
 end

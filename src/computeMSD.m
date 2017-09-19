@@ -21,7 +21,7 @@ else
   msd=zeros(number_delta_t,3); %Store [mean, std, n]
 end
 
-parfor dt = 1:number_delta_t
+for dt = 1:number_delta_t
   % Make sure we have no otherlapping time windows
   NwMax = ceil( number_timepnts / dt ) - 1;
   if useStart
@@ -48,6 +48,9 @@ parfor dt = 1:number_delta_t
       mean(quartic_dis(:)); ... %average
       std(quartic_dis(:))]'; %std
   else
+      if dt > number_delta_t/7
+          temp = 6;
+      end
     msd(dt,:) = [mean(squared_dis(:)); ... % average
       std(squared_dis(:)); ...; % std
       length(squared_dis(:)) ]';
