@@ -201,7 +201,7 @@ try
         meanErr = std(squeeze(msd(:,:,2)),1);
     else
         meanMSD = squeeze(msd(:,:,1));
-        meanErr = zeros(1,timesteps+1);
+        meanErr = squeeze(msd(:,:,2));
     end
     dtime = deltaT*(1:timesteps);
     %Deff = findHorztlAsymp(dtime(1:end/2),meanMSD(1:end/2),meanErr(1:end/2));
