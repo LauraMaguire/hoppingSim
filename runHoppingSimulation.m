@@ -1,14 +1,14 @@
 function runHoppingSimulation()
 try
-    
-% Things that need doing:
-% Why is MSD proportional to time step?
-%   - free diffusion is fine regardless of timestep
-%   - diffusion with binding is fine if I remove force-dependent term
-%   - seems to be fine once I fixed the hopping bug - why?
-% Refine good timestep range and calculation.
-% Write a better wrapped displacement finder.
-
+  
+  % Things that need doing:
+  % Why is MSD proportional to time step?
+  %   - free diffusion is fine regardless of timestep
+  %   - diffusion with binding is fine if I remove force-dependent term
+  %   - seems to be fine once I fixed the hopping bug - why?
+  % Refine good timestep range and calculation.
+  % Write a better wrapped displacement finder.
+  
   addpath('./src');
   StartTime = datestr(now);
   currentdir=pwd;
@@ -87,9 +87,9 @@ try
     deltaT = paramTemp.deltaT;
     
     % Attempt to estimate Ef to produce a given kon
-%     kon = 1e-3;
-%     Ef = 0.5*lambertw(2*(kon*k/(20*sqrt(2)*koff))^2);
-%     paramTemp.Ef = Ef;
+    %     kon = 1e-3;
+    %     Ef = 0.5*lambertw(2*(kon*k/(20*sqrt(2)*koff))^2);
+    %     paramTemp.Ef = Ef;
     
     % make sure all parameters are recorded
     paramTemp.Nt = Nt;
@@ -109,43 +109,44 @@ try
     
     % Set timescale (override deltaT input)
     % Timescale 1: diffusion between adjacent wells.
-%     t1 = 1/(D*c^2);
-%     % Timescale 2: diffusion from one side of well to another
-%     t2 = 8*Ef/(k*D);
-%     % Timescale 3: bound lifetime (1/koff)
-%     t3 = 1/koff;
-%     % Timescale 4: because the on probability keeps being larger than one
-%     t4 = 1/(koff*exp(Ef)*(20*sqrt(2*Ef/k)));
-% 
-%     % deltaT must be much smaller than each timescale.  If our other
-%     % assumptions are being met properly, t1 should be much larger than t2.
-%     %  I'm not sure if I'm calculating t2 correctly, though.
-%     
-%     %deltaT = min([t1,t2,t3,10*t4])/10;
-%     disp([t1,t2,t3,t4]);
-%     disp(num2str(deltaT));
-%     paramTemp.deltaT = deltaT;
+    %     t1 = 1/(D*c^2);
+    %     % Timescale 2: diffusion from one side of well to another
+    %     t2 = 8*Ef/(k*D);
+    %     % Timescale 3: bound lifetime (1/koff)
+    %     t3 = 1/koff;
+    %     % Timescale 4: because the on probability keeps being larger than one
+    %     t4 = 1/(koff*exp(Ef)*(20*sqrt(2*Ef/k)));
+    %
+    %     % deltaT must be much smaller than each timescale.  If our other
+    %     % assumptions are being met properly, t1 should be much larger than t2.
+    %     %  I'm not sure if I'm calculating t2 correctly, though.
+    %
+    %     %deltaT = min([t1,t2,t3,10*t4])/10;
+    %     disp([t1,t2,t3,t4]);
+    %     disp(num2str(deltaT));
+    %     paramTemp.deltaT = deltaT;
     
-%     % reset number of steps based on timestep
-%     %timesteps = round(5000/deltaT);
-%     paramTemp.timesteps = timesteps;
-%     disp(num2str(timesteps));
-
+    %     % reset number of steps based on timestep
+    %     %timesteps = round(5000/deltaT);
+    %     paramTemp.timesteps = timesteps;
+    %     disp(num2str(timesteps));
+    
     %   Initialize x-array:
     %   Dimension 1 indexes the run number.
     %   Dimension 2 indexes the timestep.
     %   Dimension 3 gives (1) the position and (2) the tether location, if
     %   bound to a tether.  If unbound, (2) is zero.
-    all_x_output = zeros(runs,timesteps+1,2);
-    boundRecord = zeros(runs, timesteps+1);
-    unboundList = zeros(runs, timesteps+1);
-    unboundRecord = zeros(runs, timesteps+1);
+    all_x_output = zeros(runs,paramTemp.numrec,2);
+    boundRecord = zeros(runs, paramTemp.numrec);
+    unboundList = zeros(runs, paramTemp.numrec);
+    unboundRecord = zeros(runs, paramTemp.numrec);
     hopCount = zeros(1,runs);
     hopOverageCount = zeros(1,runs);
     onOverageCount = zeros(1,runs);
-
+    
     % Loop over all runs.
-    parfor i=1:runs
+    if runs > 1
+      for i=1:runs
         pause(i/100); % pause for i/100 seconds
         rng('shuffle');
         %fprintf('for i = %d Rand num = %f \n', i, rand() );
@@ -162,25 +163,42 @@ try
         hopCount(i) = hc;
         hopOverageCount(i) = hoc;
         onOverageCount(i) = oo;
+      end
+    else
+      i = 1;
+      % Run hopping simulation and store results.
+      [ x, ~,hc,hoc,oo] = NumericalHoppingTether( paramTemp, plot_flag );
+      all_x_output(i,:,:) = x;
+      [~,br] = listBoundEvents(x);
+      br(timesteps+1) = 0;
+      boundRecord(i,:) = br;
+      [unbound,ur] = listUnboundEvents(x);
+      unboundList(i,:) = unbound;
+      ur(timesteps+1) = 0;
+      unboundRecord(i,:) = ur;
+      hopCount(i) = hc;
+      hopOverageCount(i) = hoc;
+      onOverageCount(i) = oo;
     end
+    
     % Process the results.
     
     % Calculate koff (units of us^-1)
     boundRecord = nonzeros(boundRecord);
     if length(boundRecord) > 50
-        [fit, ~] = ExpFit(boundRecord,deltaT);
-        koff = -fit.b;
+      [fit, ~] = ExpFit(boundRecord,deltaT);
+      koff = -fit.b;
     else
-        koff = 0;
+      koff = 0;
     end
     
     % Calculate kon (units of us^-1 uM^-1)
     unboundRecord = nonzeros(unboundRecord);
     if length(unboundRecord) > 50
-        [fit, ~] = ExpFit(unboundRecord,deltaT);
-        kon = -fit.b/Nt;
+      [fit, ~] = ExpFit(unboundRecord,deltaT);
+      kon = -fit.b/Nt;
     else
-        kon = 0;
+      kon = 0;
     end
     close all
     
@@ -190,9 +208,9 @@ try
     % Reformat the position results to calculate msd.
     xx=zeros(1,paramTemp.runs,paramTemp.timesteps+1);
     for i=1:paramTemp.runs
-        xx(1,i,:) = all_x_output(i,:,1);
+      xx(1,i,:) = all_x_output(i,:,1);
     end
-
+    
     % Initialize the msd-array.
     %   Dimension 1 is the MSD.
     %   Dimension 2 is the standard deviation of the MSD.
@@ -200,18 +218,18 @@ try
     msd = zeros(paramTemp.runs, paramTemp.timesteps,3);
     timesteps = paramTemp.timesteps;
     % Call the MSD computer.
-    parfor i=1:paramTemp.runs
-        [msd(i,:,:),~] = computeMSD(xx(1,i,:), min(1e5,timesteps), 0, 1);
+    for i=1:paramTemp.runs
+      [msd(i,:,:),~] = computeMSD(xx(1,i,:), paramTemp.maxComputeMsdPnts, 0, 1);
     end
     % Take the mean MSD over all runs.
     if param.runs>1
-        meanMSD = mean(squeeze(msd(:,:,1)),1);
-        meanErr = std(squeeze(msd(:,:,2)),1);
+      meanMSD = mean(squeeze(msd(:,:,1)),1);
+      meanErr = std(squeeze(msd(:,:,2)),1);
     else
-        meanMSD = squeeze(msd(:,:,1));
-        meanErr = zeros(1,timesteps+1);
+      meanMSD = squeeze(msd(:,:,1));
+      meanErr = zeros(1,timesteps+1);
     end
-    dtime = deltaT*(1:timesteps);
+    dtime = deltaT * paramTemp.recsteps * dtime;
     %Deff = findHorztlAsymp(dtime(1:end/2),meanMSD(1:end/2),meanErr(1:end/2));
     
     % Make results structure
@@ -223,7 +241,7 @@ try
     t = deltaT*(1:round(timesteps/2));
     results.Deff = meanMSD(1:length(t))./(2*t);
     results.Derr = meanErr(1:length(t))./(2*t);
-
+    
     results.boundRecord = nonzeros(boundRecord);
     results.unboundRecord = nonzeros(unboundRecord);
     results.koffCalc = koff;
@@ -232,9 +250,9 @@ try
     
     results.hopFreq = sum(hopCount)/sum(results.boundRecord);
     if results.hopFreq ~= 0
-        results.hopOverageFreq = mean(hopOverageCount/hopCount);
+      results.hopOverageFreq = mean(hopOverageCount/hopCount);
     else
-        results.hopOverageFreq = NaN;
+      results.hopOverageFreq = NaN;
     end
     
     % shows number of timesteps that binding happened with onProb > 1
@@ -242,11 +260,11 @@ try
     
     % Give some warnings about the time scales
     if results.Deff(1) > 1.5
-        disp('Check time scale: Deff > 1.5 at t=0.');
+      disp('Check time scale: Deff > 1.5 at t=0.');
     elseif results.Deff(1) < 0.1
-        disp('Check time scale: Deff < 0.1 at t=0.');
+      disp('Check time scale: Deff < 0.1 at t=0.');
     end
-
+    
     % Save the important results in a .mat file in output directory.
     fileObj = matfile(filename,'Writable',true);
     fileObj.DeffCalc = (pf*D)+(1-pf)*(koff*lc*lp*D)/(3*D+koff*lc*lp);

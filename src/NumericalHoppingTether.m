@@ -8,7 +8,6 @@ L = params.L;
 D = params.D;
 deltaT = params.deltaT;
 timesteps = params.timesteps;
-numrecpoints = par
 
 k = params.k;
 c = params.c;
@@ -29,9 +28,11 @@ tether_locations = L*sort(rand(M,1));
 
 % x(i,1) = position, x(i,2) is well number (0 if
 % unbound.
+
 x = zeros(params.numrec,2);
 x(1,:) = [L/2 0]; % start at the center.
-jrec = 2; % record index
+jrec = 1; % record index (first step gets recorded if t = 0)
+recsteps = params.recsteps;
 
 % intializing arrays for some diagnostic variables
 %Ecurrent = zeros(timesteps,1); % can remove when lifetime problem is solved
@@ -40,12 +41,11 @@ hopCount = 0;
 hopOverageCount = 0;
 onOverage = 0;
 
-% get current position and binding
-currPos = x(1,1);
-currBind = x(1,2);
+% get current position and binding for first step (t = 0)
 nextPos = x(1,1);
 nextBind = x(1,2);
-for i=0:timesteps
+fprintf('Starting time loop\n')
+for i=0:timesteps-1
     randomNumber = rand;    
     % update positions and binding
     currPos = nextPos;
@@ -58,13 +58,13 @@ for i=0:timesteps
             nextBind = 0;  % move to unbound state
         else
             % First, pick a random nearby tether to attempt hopping to.
-            nearbyIndices = findNearbyTethers(x(i,1),k,Ef,L,tether_locations,10);
+            nearbyIndices = findNearbyTethers(currPos,k,Ef,L,tether_locations,10);
             tetherIndex = datasample(nearbyIndices,1);
             
             % Calculate Delta G to hop between current tether and new
             % tether.
-            DeltaG = (0.5*k*(wrapdistance(x(i,1),tether_locations(tetherIndex),L)^2 ...
-                -wrapdistance(x(i,1),tether_locations(x(i,2)),L)^2));
+            DeltaG = (0.5*k*(wrapdistance(currPos,tether_locations(tetherIndex),L)^2 ...
+                -wrapdistance(currPos,tether_locations(currBind),L)^2));
             
             % Calculate the probability of a hop.
             kHopCurrent = kHop*length(nearbyIndices)*exp(-DeltaG/2);
@@ -86,19 +86,18 @@ for i=0:timesteps
             else
                 nextBind = currBind;
             end
-            
         end
         
     elseif currBind==0 % particle is unbound.  This loop attempts binding.
         % First, pick a random nearby tether to attempt binding to.
-        nearbyIndices = findNearbyTethers(x(i,1),k,Ef,L,tether_locations,10);
+        nearbyIndices = findNearbyTethers(currPos,k,Ef,L,tether_locations,10);
         tetherIndex = datasample(nearbyIndices,1);
         
         % Calculate Delta G for this position and tether.
-        DeltaG = -Ef+0.5*k*wrapdistance(x(i,1),tether_locations(tetherIndex),L)^2;
+        DeltaG = -Ef+0.5*k*wrapdistance(currPos,tether_locations(tetherIndex),L)^2;
     
         % Sum up Boltzmann factors for nearby sites.
-        % denominator = sumNearbyBFs(x(i,1),k,L,Ef,nearbyIndices,tether_locations);
+        % denominator = sumNearbyBFs(currPos,k,L,Ef,nearbyIndices,tether_locations);
     
         % Calculate probability of binding to nearest tether:
         %konCurrent = konSite*exp(-DeltaG)/denominator;
@@ -135,18 +134,29 @@ for i=0:timesteps
         nextPos = currPos + step;
     else % bound, move in a force-dependent way
         % find displacement from center of well
-        dispFromCenter = wrapdisplacement(x(i,1),tether_locations(x(i+1,2)),L);
+        dispFromCenter = wrapdisplacement(currPos,tether_locations(nextBind),L);
         %dispFromCenter = 0; % remove after debugging!
         % incorporate a term based on spring force.
         nextPos = currPos-D*k*dispFromCenter*deltaT + step;
     end
 
     % recording
-    if mod(i, particle.recsteps) == 0 
+    if mod(i, recsteps) == 0 
       x(jrec,1) = currPos;
       x(jrec,2) = currBind;
       jrec = jrec+1;
     end
+end
+keyboard
+% update last time
+i = i + 1;
+currPos = nextPos;
+currBind = nextBind;
+% recording
+if mod(i, recsteps) == 0 
+  fprintf('Recording %d\n', jrec)
+  x(jrec,1) = currPos;
+  x(jrec,2) = currBind;
 end
 
 if plot_flag
