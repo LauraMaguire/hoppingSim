@@ -236,8 +236,10 @@ try
     results = struct();
     results.meanMSD = meanMSD;
     results.meanErr = meanErr;
-    results.dtime = dtime';
-    results.msdAll = msdAll;
+    results.dtime = dtime;
+    results.msdAll = msdAll(:,1)';
+    results.msdSigAll = msdAll(:,2)';
+    results.msdNumPtnsAll = msdAll(:,3)';
     if paramTemp.storePos
       xx = reshape( xx, [paramTemp.runs, numrec] );
       results.xx = xx;
