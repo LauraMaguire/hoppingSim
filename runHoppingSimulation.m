@@ -85,6 +85,7 @@ try
     c = (Nt/1.66e6)^(1/3);
     paramTemp.c=c;
     deltaT = paramTemp.deltaT;
+    numrec = paramTemp.numrec;
     
     % Attempt to estimate Ef to produce a given kon
     %     kon = 1e-3;
@@ -136,10 +137,10 @@ try
     %   Dimension 2 indexes the timestep.
     %   Dimension 3 gives (1) the position and (2) the tether location, if
     %   bound to a tether.  If unbound, (2) is zero.
-    all_x_output = zeros(runs,paramTemp.numrec,2);
-    boundRecord = zeros(runs, paramTemp.numrec);
-    unboundList = zeros(runs, paramTemp.numrec);
-    unboundRecord = zeros(runs, paramTemp.numrec);
+    all_x_output = zeros(runs,numrec,2);
+    boundRecord = zeros(runs, numrec);
+    unboundList = zeros(runs, numrec);
+    unboundRecord = zeros(runs, numrec);
     hopCount = zeros(1,runs);
     hopOverageCount = zeros(1,runs);
     onOverageCount = zeros(1,runs);
@@ -154,11 +155,9 @@ try
         [ x, ~,hc,hoc,oo] = NumericalHoppingTether( paramTemp, plot_flag );
         all_x_output(i,:,:) = x;
         [~,br] = listBoundEvents(x);
-        br(timesteps+1) = 0;
         boundRecord(i,:) = br;
         [unbound,ur] = listUnboundEvents(x);
         unboundList(i,:) = unbound;
-        ur(timesteps+1) = 0;
         unboundRecord(i,:) = ur;
         hopCount(i) = hc;
         hopOverageCount(i) = hoc;
@@ -174,7 +173,6 @@ try
       boundRecord(i,:) = br;
       [unbound,ur] = listUnboundEvents(x);
       unboundList(i,:) = unbound;
-      ur(timesteps+1) = 0;
       unboundRecord(i,:) = ur;
       hopCount(i) = hc;
       hopOverageCount(i) = hoc;
@@ -182,7 +180,6 @@ try
     end
     
     % Process the results.
-    
     % Calculate koff (units of us^-1)
     boundRecord = nonzeros(boundRecord);
     if length(boundRecord) > 50
@@ -206,42 +203,50 @@ try
     pf = sum(sum(unboundList))/(runs*timesteps);
     
     % Reformat the position results to calculate msd.
-    xx=zeros(1,paramTemp.runs,paramTemp.timesteps+1);
+    xx=zeros(paramTemp.runs, 1,numrec);
     for i=1:paramTemp.runs
-      xx(1,i,:) = all_x_output(i,:,1);
+      xx(i,1,:) = reshape( all_x_output(i,:,1), [1 1 numrec] ) ;
     end
     
     % Initialize the msd-array.
     %   Dimension 1 is the MSD.
     %   Dimension 2 is the standard deviation of the MSD.
     %   Dimension 3 is the number of intervals used in the calculation.
-    msd = zeros(paramTemp.runs, paramTemp.timesteps,3);
-    timesteps = paramTemp.timesteps;
+    msd = zeros(paramTemp.runs, numrec-1,3);
     % Call the MSD computer.
     for i=1:paramTemp.runs
-      [msd(i,:,:),~] = computeMSD(xx(1,i,:), paramTemp.maxComputeMsdPnts, 0, 1);
+      [msdTemp,dtime] = computeMSD(xx(i,:,:), paramTemp.maxComputeMsdPnts, 0, 1);
+      msd(i,:,:) = msdTemp;
     end
+    
+    % take average over all msd
+    msdAll = computeMSD(xx, paramTemp.maxComputeMsdPnts, 0, 1);
     % Take the mean MSD over all runs.
     if param.runs>1
       meanMSD = mean(squeeze(msd(:,:,1)),1);
       meanErr = std(squeeze(msd(:,:,2)),1);
     else
       meanMSD = squeeze(msd(:,:,1));
-      meanErr = zeros(1,timesteps+1);
+      meanErr = zeros(1,numrec);
     end
-    dtime = deltaT * paramTemp.recsteps * dtime;
-    %Deff = findHorztlAsymp(dtime(1:end/2),meanMSD(1:end/2),meanErr(1:end/2));
+    % Time stuff
+    dtime = deltaT * paramTemp.recsteps * dtime';
     
     % Make results structure
     results = struct();
     results.meanMSD = meanMSD;
     results.meanErr = meanErr;
-    results.dtime = dtime;
+    results.dtime = dtime';
+    results.msdAll = msdAll;
+    if paramTemp.storePos
+      xx = reshape( xx, [paramTemp.runs, numrec] );
+      results.xx = xx;
+    end
     
-    t = deltaT*(1:round(timesteps/2));
-    results.Deff = meanMSD(1:length(t))./(2*t);
-    results.Derr = meanErr(1:length(t))./(2*t);
-    
+    % calculate D
+    %Deff = findHorztlAsymp(dtime(1:end/2),meanMSD(1:end/2),meanErr(1:end/2));
+    results.Deff = meanMSD ./ ( 2*dtime );
+    results.Derr = meanErr ./ ( 2*dtime );
     results.boundRecord = nonzeros(boundRecord);
     results.unboundRecord = nonzeros(unboundRecord);
     results.koffCalc = koff;

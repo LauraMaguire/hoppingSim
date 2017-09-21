@@ -147,14 +147,12 @@ for i=0:timesteps-1
       jrec = jrec+1;
     end
 end
-keyboard
 % update last time
 i = i + 1;
 currPos = nextPos;
 currBind = nextBind;
 % recording
 if mod(i, recsteps) == 0 
-  fprintf('Recording %d\n', jrec)
   x(jrec,1) = currPos;
   x(jrec,2) = currBind;
 end

@@ -27,6 +27,7 @@ param.L = 500; % length of simulated medium in nm
 param.D = 1; % diffusion coefficient (nm^2/us)
 
 % Parameters relating to the simulation logistics
+param.storePos = 0; % store position flag
 param.timesteps = 10^5; % Total number of timesteps.
 param.recsteps = 10; % number of steps before recording
 param.maxComputeMsdPnts = min(1e5,param.timesteps);

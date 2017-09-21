@@ -1,48 +1,29 @@
 function [unboundOrNot, unboundRecord] = listUnboundEvents(x)
 % Calculates macroscopic kon in units of per molarity per time.
-
+numRec = size(x,1);
 % remove position information from x vectors, leaving only tether info
 tetherInfo = squeeze(x(:,2).');
 % initialize vector
-unboundOrNot = zeros(1, size(x,1));
-% Loop over all timesteps to fill in unboundOrNot
-for step=1:size(x,1)
-    tetherLocation = tetherInfo(step);
-    if tetherLocation==0 % fill in a one if unbound
-        unboundOrNot(step) = 1;
-    else % fill in a zero if bound
-        unboundOrNot(step) = 0;
-    end
-end
-
-% initialize counter to track number of binding events
-eventCounter = 0;
-% initialize counter to keep a running count of the length of each event
-runningLengthCounter = 0;
-
+unboundOrNot = zeros(1, numRec);
+unboundRecord = zeros(1, numRec);
+% Set all unbound points to zeros
+unboundOrNot( tetherInfo == 0 ) = 1;
 % Loop over all but the first timestep to find the number and length of
 % binding events.  Note that particle is always unbound on the first
-% timestep. Ignore first timestep; negligible overall.
-for step=2:size(x,1)
-    % add to the running count if the particle is unbound
-    if unboundOrNot(step)==1
-        runningLengthCounter = runningLengthCounter+1;
-    end
-    % enter this loop if beginning a binding event (go from unbound to
-    % bound)
-    if (unboundOrNot(step)==0) && (unboundOrNot(step-1)==1)
-        % add an event to the counter
-        eventCounter = eventCounter+1;
+% so we can't tell how long it's been bound. Ignore it.
+for step=2:numRec
+  if unboundOrNot(step)==1 && unboundOrNot(step-1)==0
+    for stepLater = step+1:numRec
+      % add to the running count if the particle is unbound
+      % enter this loop if beginning a binding event (go from unbound to
+      % bound)
+      if (unboundOrNot(stepLater)==0) || (stepLater == numRec)
         % transfer the running count into the permanent record
-        unboundRecord(eventCounter) = runningLengthCounter;
-        % reset the running count
-        runningLengthCounter = 0;
-    end
-end
-% After looping through timesteps, set bindingRecord to zero if no
-% binding events ever occurred.
-if eventCounter==0
-    unboundRecord=0;
+        unboundRecord(step) = stepLater - step;
+        break
+      end
+    end % loop over later times
+  end
+end % loop over binding events
 end
 
-end
