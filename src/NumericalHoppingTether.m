@@ -1,6 +1,5 @@
 function [ x, tether_locations,hopCount,hopOverageCount, onOverage] = NumericalHoppingTether( params, plot_flag )
 try
-% currently hard-coded for koff=0!
 % This code runs the simulation with a continuous model, taking in only
 % non-dimensional parameters.
 
@@ -10,12 +9,9 @@ deltaT = params.deltaT;
 timesteps = params.timesteps;
 k = params.k;
 c = params.c;
-%koff = params.koff;
-koff = 0;
-%hop_probability = params.hop_probability; 
+koff = params.koff;
 kHop = params.kHop;  
 Ef = params.Ef; 
-%right_probability = params.right_probability;
 
 % Make a tether vector with randomly-spaced tethers from a continuous
 % uniform distribution.
@@ -25,14 +21,11 @@ M = round(L*c);
 % Make a sorted list of random tethers:
 tether_locations = L*sort(rand(M,1));
 
-% x(i,1) = position, x(i,2) is well number (0 if
-% unbound.
+% x(i,1) = position, x(i,2) is well number (0 if unbound).
 x = zeros(timesteps,2);
 x(1,:) = [L/2 0]; % start at the center.
 
 % intializing arrays for some diagnostic variables
-%Ecurrent = zeros(timesteps,1); % can remove when lifetime problem is solved
-%distances = zeros(timesteps,1);
 hopCount = 0;
 hopOverageCount = 0;
 onOverage = 0;
@@ -56,19 +49,13 @@ for i=1:timesteps
             
             % Calculate the probability of a hop.
             kHopCurrent = kHop*length(nearbyIndices)*exp(-DeltaG/2);
-%             disp(['M = ' num2str(length(nearbyIndices))]);
-%             disp(['exp(-DG/2) = ' num2str(exp(-DeltaG/2))]);
             probHop = kHopCurrent*deltaT;
             
             % Hop if needed, otherwise stay bound to original tether.
             if randomNumber < probOff +probHop
                 x(i+1,2) = tetherIndex;
-%                 disp('Hopping');
                 hopCount = hopCount+1;
                 if (probOff+probHop) > 1
-%                   disp('probOff + probHop > 1');
-%                   disp(['probOff = ' num2str(probOff)]);
-%                   disp(['probHop = ' num2str(probHop)]);
                     hopOverageCount = hopOverageCount+1;
                 end
             else
@@ -84,14 +71,10 @@ for i=1:timesteps
         
         % Calculate Delta G for this position and tether.
         DeltaG = -Ef+0.5*k*wrapdistance(x(i,1),tether_locations(tetherIndex),L)^2;
-    
-        % Sum up Boltzmann factors for nearby sites.
-        % denominator = sumNearbyBFs(x(i,1),k,L,Ef,nearbyIndices,tether_locations);
-    
+        
         % Calculate probability of binding to nearest tether:
-        %konCurrent = konSite*exp(-DeltaG)/denominator;
         konCurrent = koff*length(nearbyIndices)*exp(-DeltaG);
-        onProb = 1;%konCurrent*deltaT;
+        onProb = konCurrent*deltaT;
         if onProb > 1
             disp('onProb greater than one');
             disp(['konCurrent = ' num2str(konCurrent)]);
@@ -118,7 +101,6 @@ for i=1:timesteps
     % sigma corresponds to Gaussian solution to diffusion equation.
     sigma = sqrt(2*D*deltaT);
     step = normrnd(0,sigma);
-%    x(i+1,1) = x(i,1) + step; % remove to allow k not equal zero!
     if x(i+1,2) == 0 % unbound, accept move
         x(i+1,1) = x(i,1) + step;
     else % bound, move in a force-dependent way

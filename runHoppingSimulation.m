@@ -78,11 +78,6 @@ try
     paramTemp.c=c;
     deltaT = paramTemp.deltaT;
     
-    % Attempt to estimate Ef to produce a given kon
-%     kon = 1e-3;
-%     Ef = 0.5*lambertw(2*(kon*k/(20*sqrt(2)*koff))^2);
-%     paramTemp.Ef = Ef;
-    
     % make sure all parameters are recorded
     paramTemp.Nt = Nt;
     paramTemp.k = k;
@@ -142,7 +137,7 @@ try
         rng('shuffle');
         %fprintf('for i = %d Rand num = %f \n', i, rand() );
         % Run hopping simulation and store results.
-        [ x, ~,hc,hoc,oo] = NumericalHoppingTetherTest( paramTemp, plot_flag );% change back after testing!
+        [ x, ~,hc,hoc,oo] = NumericalHoppingTether( paramTemp, plot_flag );% change back after testing!
         all_x_output(i,:,:) = x;
         [~,br] = listBoundEvents(x);
         br(timesteps+1) = 0;
@@ -195,16 +190,22 @@ try
     parfor i=1:paramTemp.runs
         [msd(i,:,:),~] = computeMSD(xx(1,i,:), min(1e5,timesteps), 0, 1);
     end
+    
+    % Combine runs and uncertainties using weighted average
+
+    
+    
     % Take the mean MSD over all runs.
     if param.runs>1
         meanMSD = mean(squeeze(msd(:,:,1)),1);
-        meanErr = std(squeeze(msd(:,:,2)),1);
+        meanErr = (1/sqrt(runs))*mean(msd(:,:,2)./sqrt(msd(:,:,3)),1);
     else
         meanMSD = squeeze(msd(:,:,1));
         meanErr = squeeze(msd(:,:,2));
     end
+    
+    % define time vector
     dtime = deltaT*(1:timesteps);
-    %Deff = findHorztlAsymp(dtime(1:end/2),meanMSD(1:end/2),meanErr(1:end/2));
     
     % Make results structure
     results = struct();
@@ -212,19 +213,23 @@ try
     results.meanErr = meanErr;
     results.dtime = dtime;
     
+    % Make D effective curve using the first half of the data
     t = deltaT*(1:round(timesteps/2));
     results.Deff = meanMSD(1:length(t))./(2*t);
     results.Derr = meanErr(1:length(t))./(2*t);
 
+    % Put un/bound records and koff/kon values into results
     results.boundRecord = nonzeros(boundRecord);
     results.unboundRecord = nonzeros(unboundRecord);
     results.koffCalc = koff;
     results.konCalc = kon;
     results.pfCalc = pf;
     
+    % Calcuate frequency of hopping per bound timestep
     results.hopFreq = sum(hopCount)/sum(results.boundRecord);
+    % Calculate frequency of hop prob too high per hop
     if results.hopFreq ~= 0
-        results.hopOverageFreq = mean(hopOverageCount/hopCount);
+        results.hopOverageFreq = mean(sum(hopOverageCount)/sum(hopCount));
     else
         results.hopOverageFreq = NaN;
     end
