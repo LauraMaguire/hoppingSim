@@ -1,45 +1,50 @@
 function runHoppingSimulation()
+% This is the main function for the hopping simulation.  It uses parameters
+% set in initParam and executes several runs of NumericalHoppingTether.  It
+% saves an object in "Output" that contains the input and output parameters
+% as well as a results object.
 try
-
+  % Initialize the run.  Print current directory and start time.
   addpath('./src');
   StartTime = datestr(now);
   currentdir=pwd;
   fprintf('In dir %s\n',currentdir);
   fprintf('Start time, %s\n', StartTime);
   
-  % Allocate params
+  % Allocate params.
   param = struct();
   
-  %make output directories if they don't exist
+  % Make output directories if they don't exist.
   if exist('./output','dir') == 0; mkdir('./output') ;end
   
-  %load params. check if it exists, if not, run it, then delete it
-  %initparams on tracked, so make it if it's not there
+  % Check that Params exists.  If not, make it.
+  % initparams is untracked, so make it if it's not there.
   if exist('Params.mat','file') == 0
     if exist('initParam.m','file') == 0
       cpmatparams
     end
     initParam
   end
+  
+  % Load Params.mat and move it to ParamsFinished.mat
   load Params.mat;
   if exist('Params.mat','file')==2
     movefile('Params.mat','ParamsFinished.mat')
   end
   
-  %display everything
+  % Display everything.
   fprintf('parameters read in\n');
   disp(param);
   
-  %build a parameter matrix - I think these are the ones that get varied
-  param_mat = combvec( param.lc, param.kHop, param.Ef, param.koff, param.deltaT);
+  % Build a matrix of parameter vectors.
+  param_mat = combvec( param.lc, param.kHop, param.koff, param.deltaT);
   [~,nparams] = size(param_mat);
   
   % For some reason, param_mat gets "sliced". Create vectors to get arround
   param_lc = param_mat(1,:);
   param_kHop = param_mat(2,:);
-  param_Ef = param_mat(3,:);
-  param_koff= param_mat(4,:);
-  param_deltaT = param_mat(5,:);
+  param_koff= param_mat(3,:);
+  param_deltaT = param_mat(4,:);
   
   % print some stuff
   fprintf('Starting paramloop \n')
@@ -57,34 +62,31 @@ try
     paramTemp = param;
     paramTemp.lc = param_lc(ii);
     paramTemp.kHop = param_kHop(ii);
-    paramTemp.Ef = param_Ef(ii);
     paramTemp.koff = param_koff(ii);
     paramTemp.deltaT = param_deltaT(ii);
     
-    % calculate remaining parameters
-    lp = param.lp;
+    % rename imported parameters for convenience
+    lp = paramTemp.lp;
     lc = paramTemp.lc;
     D = paramTemp.D;
-    k = 3/(2*lc*lp);
-    %Ef = paramTemp.Ef;
     koff = paramTemp.koff;
-    Ef = 1.88*koff^(-0.168);
-    paramTemp.Ef = Ef;
+    Nt = paramTemp.Nt;
     runs = paramTemp.runs;
     timesteps = paramTemp.timesteps;
-    %Nt = 1.66e6*c^3; % tether concentration in uM
-    Nt = 1e3;
+    deltaT = paramTemp.deltaT; 
+    
+    % Calculate and save remaining parameters
+    k = 3/(2*lc*lp);
+    paramTemp.k = k;
+    Ef = 1.88*koff^(-0.168);
+    paramTemp.Ef = Ef;
     c = (Nt/1.66e6)^(1/3);
     paramTemp.c=c;
-    deltaT = paramTemp.deltaT;
-    
-    % make sure all parameters are recorded
-    paramTemp.Nt = Nt;
-    paramTemp.k = k;
-    
+       
     % set plot_flag to zero so lots of plots don't pop up.
     plot_flag = 0;
     
+    % Set name that results will be saved under
     filestring=['TrID', num2str(paramTemp.trID),...
       '_Ef',num2str(paramTemp.Ef,'%.1f'),...
       '_koff',num2str(paramTemp.koff,'%.2e'),...
@@ -118,12 +120,14 @@ try
 %     paramTemp.timesteps = timesteps;
 %     disp(num2str(timesteps));
 
-    %   Initialize x-array:
+    % Initialize x-array:
     %   Dimension 1 indexes the run number.
     %   Dimension 2 indexes the timestep.
     %   Dimension 3 gives (1) the position and (2) the tether location, if
     %   bound to a tether.  If unbound, (2) is zero.
     all_x_output = zeros(runs,timesteps+1,2);
+    
+    % Initialize other arrays.
     boundRecord = zeros(runs, timesteps+1);
     unboundList = zeros(runs, timesteps+1);
     unboundRecord = zeros(runs, timesteps+1);
@@ -137,20 +141,22 @@ try
         rng('shuffle');
         %fprintf('for i = %d Rand num = %f \n', i, rand() );
         % Run hopping simulation and store results.
-        [ x, ~,hc,hoc,oo] = NumericalHoppingTether( paramTemp, plot_flag );% change back after testing!
+        [ x, ~,hc,hoc,oo] = NumericalHoppingTether( paramTemp, plot_flag );
         all_x_output(i,:,:) = x;
+        % Create list of bound events.
         [~,br] = listBoundEvents(x);
         br(timesteps+1) = 0;
         boundRecord(i,:) = br;
+        % Create list of unbound events.
         [unbound,ur] = listUnboundEvents(x);
         unboundList(i,:) = unbound;
         ur(timesteps+1) = 0;
         unboundRecord(i,:) = ur;
+        % Add to hopping and overage counts.
         hopCount(i) = hc;
         hopOverageCount(i) = hoc;
         onOverageCount(i) = oo;
     end
-    % Process the results.
     
     % Calculate koff (units of us^-1)
     boundRecord = nonzeros(boundRecord);
@@ -190,10 +196,6 @@ try
     parfor i=1:paramTemp.runs
         [msd(i,:,:),~] = computeMSD(xx(1,i,:), min(1e5,timesteps), 0, 1);
     end
-    
-    % Combine runs and uncertainties using weighted average
-
-    
     
     % Take the mean MSD over all runs.
     if param.runs>1
@@ -253,6 +255,7 @@ try
     movefile(filename,'./output');
   end % end of loop over parameters
   
+  % Finish up and display runtime.
   runTime = toc(RunTimeID);
   runHr = floor( runTime / 3600); runTime = runTime - runHr*3600;
   runMin = floor( runTime / 60);  runTime = runTime - runMin*60;

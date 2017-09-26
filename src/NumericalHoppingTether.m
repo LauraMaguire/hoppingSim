@@ -3,6 +3,7 @@ try
 % This code runs the simulation with a continuous model, taking in only
 % non-dimensional parameters.
 
+% Import parameters.
 L = params.L;
 D = params.D;
 deltaT = params.deltaT;
@@ -106,18 +107,17 @@ for i=1:timesteps
     else % bound, move in a force-dependent way
         % find displacement from center of well
         dispFromCenter = wrapdisplacement(x(i,1),tether_locations(x(i+1,2)),L);
-        %dispFromCenter = 0; % remove after debugging!
         % incorporate a term based on spring force.
         x(i+1,1) = x(i,1)-D*k*dispFromCenter*deltaT + step;
     end
     
 end
 
-
+% Plot things if needed.
 if plot_flag
     close all
     subplot(2,2,1)
-    plot_time = timesteps;% min(10^6, timesteps); %only plot of subset for long runs.
+    plot_time = timesteps;
     histogram(nonzeros(x(1:plot_time,2)))
     title('tether locations')
     subplot(2,2,2)

@@ -8,30 +8,23 @@ clear param
 
 % Variable nondimensional parameters
 param.kHop = [0]; % non-dim hopping parameter
-param.Ef = [4]; % Free energy in units of kT (non-dim)
-%param.hop_probability = [0]; % Hopping attempt rate (non-dim)
 
 % Variable dimensional parameters
 param.lc = [100]; % Nup contour length (nm)
 param.koff = [1e-2]; % macroscopic off-rate (us^-1)
-param.deltaT = [0.005 0.01 0.02 0.04]; % timestep (units of us)
-
-% Constant nondimensional parameters
-param.lp = 1; % Nup persistence length (nm)
-param.c = 0.1; % number of tethers per nm
+param.deltaT = [0.01]; % timestep (units of us)
 
 % Constant dimensional parameters
 param.lp = 1; % Nup persistence length (nm)
-param.c = 0.1; % number of tethers per nm
 param.L = 500; % length of simulated medium in nm
 param.D = 1; % diffusion coefficient (nm^2/us)
+param.Nt = 1e3; % total Nup concentration (uM)
 
 % Parameters relating to the simulation logistics
 param.timesteps = 10^5; % Total number of timesteps.
 param.runs = 10; % number of times to run the simulation
 param.right_probability = 0.5; % in case I want to include drift
-param.numTr = 1; % number of trials
-param.trID = 14; % trial ID
+param.trID = 1; % trial ID
 
 % Save it
 save('Params', 'param');
