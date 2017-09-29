@@ -12,18 +12,18 @@ hop = cell(1,length(hopValues));
 for i=1:length(hopValues)
     hop{i} = find(r.khop == hopValues(i));
     leg{i} = num2str(hopValues(i));
-    errorbar(r.kd(hop{i}),r.dPost(hop{i}),r.dErr(hop{i}),'o');
+    errorbar(r.kd(hop{i}),r.dPost(hop{i}),r.dErr(hop{i}),'o','MarkerSize',10);
 end
 leg{i+1} = 'Tether Model';
 
 xlabel('KD (uM)');
 ylabel('Deff / Dfree');
 
-lc = 100;
-xx = logspace(-2,1);
+lc = 500;
+xx = logspace(-3,1);
 y = (1.*(xx*1e-3).*1.*lc)./(3.*1+(xx*1e-3).*1.*lc);
 plot(xx,y,'b-');
-
+axis([9e-4 1e1 0 1]);
 l = legend(leg,'Location','southwest');
 v = get(l,'title');
 set(v,'String','kHop')
@@ -68,10 +68,12 @@ for i=1:length(hopValues)
     hop{i} = find(r.khop == hopValues(i));
     leg{i} = num2str(hopValues(i));
     sel = r.bindFlux./r.nonbindFlux;
-    errorbar(r.kd(hop{i}),sel(hop{i}),r.dErr(hop{i}),'o');
+    err = r.bFluxErr./r.nonbindFlux;
+    errorbar(r.kd(hop{i}),sel(hop{i}),err(hop{i}),'o','MarkerSize',10);
 end
 
-semilogx(xx/1e-3,y./nb);
+axis([1e-3 1e2 0 80]);
+semilogx(xx/1e-3,y./nb,'b-');
 l = legend(leg,'Location','southwest');
 v = get(l,'title');
 set(v,'String','kHop')
@@ -81,12 +83,12 @@ ylabel('Selectivity');
 
 %%
 clear y
-xx=logspace(-5,-1,30);
+xx=logspace(-6,-1,30);
 p = struct();
 p.AB = 20;
 p.L = 100;
 p.Nt = 1e3;
-p.ll=100;
+p.ll=500;
 p.DF = 1;
 p.kon = 1e-3;
 
