@@ -25,9 +25,9 @@ parfor dt = 1:number_delta_t
   % Make sure we have no otherlapping time windows
   NwMax = ceil( number_timepnts / dt ) - 1;
   if useStart
-%     temp = number_timepnts - NwMax*dt;
-%     randStart = randi(temp);
-    randStart=1;
+    temp = number_timepnts - NwMax*dt;
+    randStart = randi(temp);
+%     randStart=1;
     nStartPoss = randStart:dt:NwMax*dt;
     randInd = randperm( NwMax, min(NwMax,maxpts_msd) );
     index_start = nStartPoss( randInd );
