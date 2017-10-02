@@ -8,6 +8,7 @@ L = params.L;
 D = params.D;
 deltaT = params.deltaT;
 timesteps = params.timesteps;
+
 k = params.k;
 c = params.c;
 koff = params.koff;
@@ -23,30 +24,40 @@ M = round(L*c);
 tether_locations = L*sort(rand(M,1));
 
 % x(i,1) = position, x(i,2) is well number (0 if unbound).
-x = zeros(timesteps,2);
+x = zeros(params.numrec,2);
 x(1,:) = [L/2 0]; % start at the center.
+jrec = 1; % record index (first step gets recorded if t = 0)
+recsteps = params.recsteps;
 
 % intializing arrays for some diagnostic variables
 hopCount = 0;
 hopOverageCount = 0;
 onOverage = 0;
 
-for i=1:timesteps
+% get current position and binding for first step (t = 0)
+nextPos = x(1,1);
+nextBind = x(1,2);
+fprintf('Starting time loop\n')
+for i=0:timesteps-1
     randomNumber = rand;    
+    % update positions and binding
+    currPos = nextPos;
+    currBind = nextBind;
+
     % Check for binding/unbinding state changes.
-    if x(i,2) ~= 0 % enter this loop if the particle is currently bound
+    if currBind ~= 0 % enter this loop if the particle is currently bound
         probOff = koff*deltaT;
         if randomNumber < probOff
-            x(i+1,2) = 0;  % move to unbound state
+            nextBind = 0;  % move to unbound state
         else
             % First, pick a random nearby tether to attempt hopping to.
-            nearbyIndices = findNearbyTethers(x(i,1),k,Ef,L,tether_locations,10);
+            nearbyIndices = findNearbyTethers(currPos,k,Ef,L,tether_locations,10);
             tetherIndex = datasample(nearbyIndices,1);
             
             % Calculate Delta G to hop between current tether and new
             % tether.
-            DeltaG = (0.5*k*(wrapdistance(x(i,1),tether_locations(tetherIndex),L)^2 ...
-                -wrapdistance(x(i,1),tether_locations(x(i,2)),L)^2));
+            DeltaG = (0.5*k*(wrapdistance(currPos,tether_locations(tetherIndex),L)^2 ...
+                -wrapdistance(currPos,tether_locations(currBind),L)^2));
             
             % Calculate the probability of a hop.
             kHopCurrent = kHop*length(nearbyIndices)*exp(-DeltaG/2);
@@ -54,25 +65,23 @@ for i=1:timesteps
             
             % Hop if needed, otherwise stay bound to original tether.
             if randomNumber < probOff +probHop
-                x(i+1,2) = tetherIndex;
+                nextBind = tetherIndex;
                 hopCount = hopCount+1;
                 if (probOff+probHop) > 1
                     hopOverageCount = hopOverageCount+1;
                 end
             else
-                x(i+1,2) = x(i,2);
+                nextBind = currBind;
             end
-            
         end
         
-    elseif x(i,2)==0 % particle is unbound.  This loop attempts binding.
+    elseif currBind==0 % particle is unbound.  This loop attempts binding.
         % First, pick a random nearby tether to attempt binding to.
-        nearbyIndices = findNearbyTethers(x(i,1),k,Ef,L,tether_locations,10);
+        nearbyIndices = findNearbyTethers(currPos,k,Ef,L,tether_locations,10);
         tetherIndex = datasample(nearbyIndices,1);
         
         % Calculate Delta G for this position and tether.
-        DeltaG = -Ef+0.5*k*wrapdistance(x(i,1),tether_locations(tetherIndex),L)^2;
-        
+        DeltaG = -Ef+0.5*k*wrapdistance(currPos,tether_locations(tetherIndex),L)^2;
         % Calculate probability of binding to nearest tether:
         konCurrent = koff*length(nearbyIndices)*exp(-DeltaG);
         onProb = konCurrent*deltaT;
@@ -83,12 +92,12 @@ for i=1:timesteps
         %end
     
         if randomNumber < onProb % accept binding to new tether
-            x(i+1,2) = tetherIndex;
+            nextBind = tetherIndex;
             if onProb > 1
                 onOverage = onOverage+1;
             end
         else % rejected the move, so stay where you are
-            x(i+1,2) = x(i,2);
+            nextBind = currBind;
         end
     end
     
@@ -102,18 +111,35 @@ for i=1:timesteps
     % sigma corresponds to Gaussian solution to diffusion equation.
     sigma = sqrt(2*D*deltaT);
     step = normrnd(0,sigma);
-    if x(i+1,2) == 0 % unbound, accept move
-        x(i+1,1) = x(i,1) + step;
+    %distances(i) = step; %remove after debugging
+    if nextBind == 0 % unbound, accept move
+        nextPos = currPos + step;
     else % bound, move in a force-dependent way
         % find displacement from center of well
-        dispFromCenter = wrapdisplacement(x(i,1),tether_locations(x(i+1,2)),L);
+        dispFromCenter = wrapdisplacement(currPos,tether_locations(nextBind),L);
+        %dispFromCenter = 0; % remove after debugging!
         % incorporate a term based on spring force.
-        x(i+1,1) = x(i,1)-D*k*dispFromCenter*deltaT + step;
+        nextPos = currPos-D*k*dispFromCenter*deltaT + step;
     end
-    
+
+    % recording
+    if mod(i, recsteps) == 0 
+      x(jrec,1) = currPos;
+      x(jrec,2) = currBind;
+      jrec = jrec+1;
+    end
 end
 
-% Plot things if needed.
+% update last time
+i = i + 1;
+currPos = nextPos;
+currBind = nextBind;
+% recording
+if mod(i, recsteps) == 0 
+  x(jrec,1) = currPos;
+  x(jrec,2) = currBind;
+end
+
 if plot_flag
     close all
     subplot(2,2,1)

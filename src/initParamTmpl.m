@@ -21,10 +21,17 @@ param.D = 1; % diffusion coefficient (nm^2/us)
 param.Nt = 1e3; % total Nup concentration (uM)
 
 % Parameters relating to the simulation logistics
+param.storePos = 0; % store position flag
 param.timesteps = 10^5; % Total number of timesteps.
+param.recsteps = 10; % number of steps before recording
+param.maxComputeMsdPnts = min(1e5,param.timesteps);
 param.runs = 10; % number of times to run the simulation
 param.right_probability = 0.5; % in case I want to include drift
 param.trID = 1; % trial ID
 
+% calculated time parameters
+param.numrec = round( param.timesteps/param.recsteps) + 1 ;
+% Fix timesteps to be integer number of recsteps
+param.timesteps = round( param.timesteps/param.recsteps) * param.recsteps;
 % Save it
 save('Params', 'param');
