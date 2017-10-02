@@ -57,6 +57,7 @@ try
     pause(ii); % pause for ii seconds
     rng('shuffle');
     fprintf('for ii = %d Rand num = %f \n', ii, rand() );
+    fprintf(['Time is now ' datestr(now) '\n']);
     
     % assign temp variables
     paramTemp = param;
@@ -139,6 +140,7 @@ try
     parfor i=1:runs
         pause(i/100); % pause for i/100 seconds
         rng('shuffle');
+        fprintf(['Run ' num2str(i) '. Time is now ' datestr(now) '\n']);
         %fprintf('for i = %d Rand num = %f \n', i, rand() );
         % Run hopping simulation and store results.
         [ x, ~,hc,hoc,oo] = NumericalHoppingTether( paramTemp, plot_flag );
@@ -194,6 +196,7 @@ try
     timesteps = paramTemp.timesteps;
     % Call the MSD computer.
     parfor i=1:paramTemp.runs
+        fprintf(['MSD: Run ' num2str(i) '. Time is now ' datestr(now) '\n']);
         [msd(i,:,:),~] = computeMSD(xx(1,i,:), min(1e5,timesteps), 0, 1);
     end
     

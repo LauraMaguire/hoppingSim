@@ -76,11 +76,11 @@ for i=1:timesteps
         % Calculate probability of binding to nearest tether:
         konCurrent = koff*length(nearbyIndices)*exp(-DeltaG);
         onProb = konCurrent*deltaT;
-        if onProb > 1
-            disp('onProb greater than one');
-            disp(['konCurrent = ' num2str(konCurrent)]);
-            disp(['deltaT = ' num2str(deltaT)]);
-        end
+        %if onProb > 1
+            %disp('onProb greater than one');
+            %disp(['konCurrent = ' num2str(konCurrent)]);
+            %disp(['deltaT = ' num2str(deltaT)]);
+        %end
     
         if randomNumber < onProb % accept binding to new tether
             x(i+1,2) = tetherIndex;
