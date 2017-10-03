@@ -54,7 +54,7 @@ try
   RunTimeID = tic;
   
   % loop over parameters
-  for ii=1:nparams
+  parfor ii=1:nparams
     % scramble rng in parfor! It's rng is indepedent on ML's current state
     pause(ii); % pause for ii seconds
     rng('shuffle');
@@ -76,14 +76,9 @@ try
     Nt = paramTemp.Nt;
     runs = paramTemp.runs;
     timesteps = paramTemp.timesteps;
-
-    %Nt = 1.66e6*c^3; % tether concentration in uM
-    Nt = 1e3;
-    c = (Nt/1.66e6)^(1/3);
-    paramTemp.c=c;
     deltaT = paramTemp.deltaT;
     numrec = paramTemp.numrec;
-    
+
     % Calculate and save remaining parameters
     k = 3/(2*lc*lp);
     paramTemp.k = k;
@@ -135,46 +130,25 @@ try
     %   Dimension 3 gives (1) the position and (2) the tether location, if
     %   bound to a tether.  If unbound, (2) is zero.
     all_x_output = zeros(runs,numrec,2);
-    boundRecord = zeros(runs, numrec);
-    unboundList = zeros(runs, numrec);
-    unboundRecord = zeros(runs, numrec);
+    boundRecord = [];
+    unboundRecord = [];
     hopCount = zeros(1,runs);
     hopOverageCount = zeros(1,runs);
     onOverageCount = zeros(1,runs);
     
-    % Loop over all runs.
-    if runs > 1
-      for i=1:runs
-        pause(i/100); % pause for i/100 seconds
-        rng('shuffle');
-        fprintf(['Run ' num2str(i) '. Time is now ' datestr(now) '\n']);
-        %fprintf('for i = %d Rand num = %f \n', i, rand() );
-        % Run hopping simulation and store results.
-        [ x, ~,hc,hoc,oo] = NumericalHoppingTether( paramTemp, plot_flag );
-        all_x_output(i,:,:) = x;
-        % Create list of bound events.
-        [~,br] = listBoundEvents(x);
-        boundRecord(i,:) = br;
-        % Create list of unbound events.
-        [unbound,ur] = listUnboundEvents(x);
-        unboundList(i,:) = unbound;
-        unboundRecord(i,:) = ur;
-        % Add to hopping and overage counts.
-        hopCount(i) = hc;
-        hopOverageCount(i) = hoc;
-        onOverageCount(i) = oo;
-      end
-    else
-      i = 1;
+    for i=1:runs
+      pause(i/100); % pause for i/100 seconds
+      rng('shuffle');
+      fprintf(['Run ' num2str(i) '. Time is now ' datestr(now) '\n']);
+      %fprintf('for i = %d Rand num = %f \n', i, rand() );
       % Run hopping simulation and store results.
-      [ x, ~,hc,hoc,oo] = NumericalHoppingTether( paramTemp, plot_flag );
+      [ x, ~,br,hc,hoc,oo] = NumericalHoppingTether( paramTemp, plot_flag );
       all_x_output(i,:,:) = x;
-      [~,br] = listBoundEvents(x);
-      br(timesteps+1) = 0;
-      boundRecord(i,:) = br;
-      [unbound,ur] = listUnboundEvents(x);
-      unboundList(i,:) = unbound;
-      unboundRecord(i,:) = ur;
+      % Create list of binding events.
+      [bl,ul] = listBindingEvents(br);
+      boundRecord = vertcat(boundRecord,bl);
+      unboundRecord = vertcat(unboundRecord,ul);
+      % Add to hopping and overage counts.
       hopCount(i) = hc;
       hopOverageCount(i) = hoc;
       onOverageCount(i) = oo;
@@ -182,26 +156,24 @@ try
     
     % Process the results.
     % Calculate koff (units of us^-1)
-    boundRecord = nonzeros(boundRecord);
     if length(boundRecord) > 50
       [fit, ~] = ExpFit(boundRecord,deltaT);
       koff = -fit.b;
     else
-      koff = 0;
+      koff = NaN;
     end
     
     % Calculate kon (units of us^-1 uM^-1)
-    unboundRecord = nonzeros(unboundRecord);
     if length(unboundRecord) > 50
       [fit, ~] = ExpFit(unboundRecord,deltaT);
       kon = -fit.b/Nt;
     else
-      kon = 0;
+      kon = NaN;
     end
     close all
     
     % Calculate pf, fraction of time spent free
-    pf = sum(sum(unboundList))/(runs*timesteps);
+    pf = sum(sum(unboundRecord))/sum(sum(vertcat(boundRecord, unboundRecord)));
     
     % Reformat the position results to calculate msd.
     xx=zeros(paramTemp.runs, 1,numrec);
@@ -250,14 +222,14 @@ try
     %Deff = findHorztlAsymp(dtime(1:end/2),meanMSD(1:end/2),meanErr(1:end/2));
     results.Deff = meanMSD ./ ( 2*dtime );
     results.Derr = meanErr ./ ( 2*dtime );
-    results.boundRecord = nonzeros(boundRecord);
-    results.unboundRecord = nonzeros(unboundRecord);
+    results.boundRecord = boundRecord;
+    results.unboundRecord = unboundRecord;
     results.koffCalc = koff;
     results.konCalc = kon;
     results.pfCalc = pf;
     
     % Calcuate frequency of hopping per bound timestep
-    results.hopFreq = sum(hopCount)/sum(results.boundRecord);
+    results.hopFreq = sum(hopCount)/sum(boundRecord);
     % Calculate frequency of hop prob too high per hop
     if results.hopFreq ~= 0
       results.hopOverageFreq = mean(hopOverageCount/hopCount);

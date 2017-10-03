@@ -1,4 +1,4 @@
-function [ x, tether_locations,hopCount,hopOverageCount, onOverage] = NumericalHoppingTether( params, plot_flag )
+function [ x, tether_locations,binding_record,hopCount,hopOverageCount, onOverage] = NumericalHoppingTether( params, plot_flag )
 try
 % This code runs the simulation with a continuous model, taking in only
 % non-dimensional parameters.
@@ -29,6 +29,9 @@ x(1,:) = [L/2 0]; % start at the center.
 jrec = 1; % record index (first step gets recorded if t = 0)
 recsteps = params.recsteps;
 
+% initialize logical array for binding record
+binding_record = false(params.timesteps,1);
+
 % intializing arrays for some diagnostic variables
 hopCount = 0;
 hopOverageCount = 0;
@@ -46,6 +49,7 @@ for i=0:timesteps-1
 
     % Check for binding/unbinding state changes.
     if currBind ~= 0 % enter this loop if the particle is currently bound
+        binding_record(i+1)=1;
         probOff = koff*deltaT;
         if randomNumber < probOff
             nextBind = 0;  % move to unbound state
