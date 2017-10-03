@@ -188,12 +188,12 @@ try
     msd = zeros(paramTemp.runs, numrec-1,3);
     % Call the MSD computer.
     for i=1:paramTemp.runs
-      [msdTemp,dtime] = computeMSD(xx(i,:,:), paramTemp.maxComputeMsdPnts, 0, 1);
+      [msdTemp,dtime] = computeMSD(xx(i,:,:), paramTemp.maxComputeMsdPnts, 0, 1, 1650);
       msd(i,:,:) = msdTemp;
     end
     
     % take average over all msd
-    msdAll = computeMSD(xx, paramTemp.maxComputeMsdPnts, 0, 1);
+    %msdAll = computeMSD(xx, paramTemp.maxComputeMsdPnts, 0, 1);
     % Take the mean MSD over all runs.
     if param.runs>1
       meanMSD = mean(squeeze(msd(:,:,1)),1);
@@ -210,9 +210,9 @@ try
     results.meanMSD = meanMSD;
     results.meanErr = meanErr;
     results.dtime = dtime;
-    results.msdAll = msdAll(:,1)';
-    results.msdSigAll = msdAll(:,2)';
-    results.msdNumPtnsAll = msdAll(:,3)';
+%     results.msdAll = msdAll(:,1)';
+%     results.msdSigAll = msdAll(:,2)';
+%     results.msdNumPtnsAll = msdAll(:,3)';
     if paramTemp.storePos
       xx = reshape( xx, [paramTemp.runs, numrec] );
       results.xx = xx;

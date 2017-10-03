@@ -1,4 +1,4 @@
-function [msd,dtime]=computeMSD(x, maxpts_msd, quadFlag, useStart)
+function [msd,dtime]=computeMSD(x, maxpts_msd, quadFlag, useStart, tCorr)
 %takes array x (mxdxn array), t (1xn),
 % startId = 1 use start
 % startId = 2 use rand
@@ -27,12 +27,12 @@ end
 for dt = 1:number_delta_t
   try
     % Make sure we have no otherlapping time windows
-  NwMax = ceil( number_timepnts / dt ) - 1;
+  NwMax = ceil( number_timepnts / (dt+tCorr) ) - 1;
   if useStart
-    temp = number_timepnts - NwMax*dt;
+    temp = number_timepnts - NwMax*(dt+tCorr);
     randStart = randi(temp);
 %     randStart=1;
-    nStartPoss = randStart:dt:NwMax*dt;
+    nStartPoss = randStart:(dt+tCorr):NwMax*(dt+tCorr);
     randInd = randperm( NwMax, min(NwMax,maxpts_msd) );
     index_start = nStartPoss( randInd );
     index_end = index_start + dt;
@@ -59,6 +59,6 @@ for dt = 1:number_delta_t
         length(squared_dis(:)) ]';
     end
   catch
-    keyboard
+%     keyboard
   end
 end

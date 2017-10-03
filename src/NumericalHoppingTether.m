@@ -148,16 +148,16 @@ if plot_flag
     close all
     subplot(2,2,1)
     plot_time = timesteps;
-    histogram(nonzeros(x(1:plot_time,2)))
+    histogram(nonzeros(x(:,2)))
     title('tether locations')
     subplot(2,2,2)
-    plot(x(1:plot_time,1))
+    plot(x(:,1))
     title('position vs time')
     subplot(2,2,4)
-    plot(nonzeros(x(1:plot_time,2)))
+    plot(nonzeros(x(:,2)))
     title('tether locations vs time')
     subplot(2,2,3)
-    histfit(x(1:plot_time,1), 100)
+    histfit(x(:,1), 100)
     title('histogram of locations')
 end
 catch err
