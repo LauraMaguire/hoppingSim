@@ -13,6 +13,7 @@ r = struct(); % initialize results structure
 
 r.d = cell(1,l); % cell array to hold Deff vectors
 r.msd = cell(1,l); % cell array to hold msd vectors
+r.filename = cell(1,l); % cell array to hold file names
 r.dt = zeros(1,l); % for delta T parameter (size of timestep)
 r.kon = zeros(1,l); % for kon calculated after running
 r.koff = zeros(1,l); % for koff calculated after running
@@ -31,6 +32,7 @@ for k=1:l
     disp(['Loading file ' num2str(k) ' of ' num2str(l) '.']);
     fname=d(k).name;
     data=load(fname);
+    r.filename{k} = fname;
     r.d{k} = data.results.Deff;
     r.msd{k} = data.results.meanMSD;
     r.dt(k) = data.paramOut.deltaT;

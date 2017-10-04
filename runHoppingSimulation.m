@@ -54,7 +54,7 @@ try
   RunTimeID = tic;
   
   % loop over parameters
-  parfor ii=1:nparams
+  for ii=1:nparams
     % scramble rng in parfor! It's rng is indepedent on ML's current state
     pause(ii); % pause for ii seconds
     rng('shuffle');
@@ -92,9 +92,8 @@ try
     
     % Set name that results will be saved under
     filestring=['TrID', num2str(paramTemp.trID),...
-      '_Ef',num2str(paramTemp.Ef,'%.1f'),...
       '_koff',num2str(paramTemp.koff,'%.2e'),...
-      '_kHop',num2str(paramTemp.kHop,'%.2f'),...
+      '_kHop',num2str(paramTemp.kHop,'%.3f'),...
       '_dT_',num2str(paramTemp.deltaT, '%.3f'),...
       '_lc',num2str(paramTemp.lc,'%.0f')];
     filename=[filestring,'.mat'];
@@ -136,10 +135,10 @@ try
     hopOverageCount = zeros(1,runs);
     onOverageCount = zeros(1,runs);
     
-    for i=1:runs
+    parfor i=1:runs
       pause(i/100); % pause for i/100 seconds
       rng('shuffle');
-      fprintf(['Run ' num2str(i) '. Time is now ' datestr(now) '\n']);
+      fprintf(['Trial ' num2str(ii) ', Run ' num2str(i) '. Time is now ' datestr(now) '\n']);
       %fprintf('for i = %d Rand num = %f \n', i, rand() );
       % Run hopping simulation and store results.
       [ x, ~,br,hc,hoc,oo] = NumericalHoppingTether( paramTemp, plot_flag );

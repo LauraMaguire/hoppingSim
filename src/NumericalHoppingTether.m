@@ -40,7 +40,7 @@ onOverage = 0;
 % get current position and binding for first step (t = 0)
 nextPos = x(1,1);
 nextBind = x(1,2);
-fprintf('Starting time loop\n')
+%fprintf('Starting time loop\n')
 for i=0:timesteps-1
     randomNumber = rand;    
     % update positions and binding

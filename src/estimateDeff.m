@@ -5,6 +5,6 @@ function [deffEst,deffErr] = estimateDeff(dtime, deff)
     plot(dtime,deff);
     hold all
     plot(dtime(start:end),deff(start:end));
-    deffEst = mean(deff(start:end));
-    deffErr = std(deff(start:end));
+    deffEst = nanmean(deff(start:end));
+    deffErr = nanstd(deff(start:end));
 end
