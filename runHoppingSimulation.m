@@ -175,6 +175,7 @@ try
     pf = sum(sum(unboundRecord))/sum(sum(vertcat(boundRecord, unboundRecord)));
     
     % Reformat the position results to calculate msd.
+    %numLags = 3e4-1;
     xx=zeros(paramTemp.runs, 1,numrec);
     for i=1:paramTemp.runs
       xx(i,1,:) = reshape( all_x_output(i,:,1), [1 1 numrec] ) ;
@@ -187,7 +188,7 @@ try
     msd = zeros(paramTemp.runs, numrec-1,3);
     % Call the MSD computer.
     for i=1:paramTemp.runs
-      [msdTemp,dtime] = computeMSD(xx(i,:,:), paramTemp.maxComputeMsdPnts, 0, 1, 1650);
+      [msdTemp,dtime] = computeMSD(xx(i,:,:), paramTemp.maxComputeMsdPnts, 0, 2);
       msd(i,:,:) = msdTemp;
     end
     

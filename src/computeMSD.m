@@ -1,4 +1,4 @@
-function [msd,dtime]=computeMSD(x, maxpts_msd, quadFlag, useStart, tCorr)
+function [msd,dtime]=computeMSD(x, maxpts_msd, quadFlag, startId)
 %takes array x (mxdxn array), t (1xn),
 % startId = 1 use start
 % startId = 2 use rand
@@ -27,21 +27,25 @@ end
 for dt = 1:number_delta_t
   try
     % Make sure we have no otherlapping time windows
-  NwMax = ceil( number_timepnts / (dt+tCorr) ) - 1;
-  if useStart
-    temp = number_timepnts - NwMax*(dt+tCorr);
-    randStart = randi(temp);
-%     randStart=1;
-    nStartPoss = randStart:(dt+tCorr):NwMax*(dt+tCorr);
-    randInd = randperm( NwMax, min(NwMax,maxpts_msd) );
-    index_start = nStartPoss( randInd );
-    index_end = index_start + dt;
-  else
-    nEndPoss = number_timepnts : -dt : 1 + dt;
-    randInd = randperm( NwMax, min(NwMax,maxpts_msd) );
-    index_end = nEndPoss(randInd);
-    index_start = index_end - dt;
-  end
+    NwMax = ceil( number_timepnts / dt ) - 1;
+    if startId == 1
+      nStartPoss = 1:dt:NwMax*dt;
+      randInd = randperm( NwMax, min(NwMax,maxpts_msd) );
+      index_start = nStartPoss( randInd );
+      index_end = index_start + dt;
+    elseif startId == 2
+      randOriginShift = randperm( min(dt,number_timepnts-dt), 1 ) - 1;
+      maxStart = max( number_timepnts - dt - randOriginShift, 1);
+      nStartPoss = randOriginShift + (1:dt:maxStart);
+      randInd = randperm( length(nStartPoss), min(length(nStartPoss),maxpts_msd) );
+      index_start = nStartPoss( randInd );
+      index_end = index_start + dt;
+    else
+      nEndPoss = number_timepnts : -dt : 1 + dt;
+      randInd = randperm( NwMax, min(NwMax,maxpts_msd) );
+      index_end = nEndPoss(randInd);
+      index_start = index_end - dt;
+    end
     delta_coords = x(:,:, index_end) - x(:,:,index_start);
     % calculate displacement ^ 2
     squared_dis = sum(delta_coords.^2,2); % dx^2+dy^2+...
@@ -59,6 +63,6 @@ for dt = 1:number_delta_t
         length(squared_dis(:)) ]';
     end
   catch
-%     keyboard
+    keyboard
   end
 end

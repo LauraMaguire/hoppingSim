@@ -147,7 +147,7 @@ end
 if plot_flag
     close all
     subplot(2,2,1)
-    plot_time = timesteps;
+    %plot_time = timesteps;
     histogram(nonzeros(x(:,2)))
     title('tether locations')
     subplot(2,2,2)
