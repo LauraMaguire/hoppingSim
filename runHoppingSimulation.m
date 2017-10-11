@@ -185,30 +185,30 @@ try
     %   Dimension 1 is the MSD.
     %   Dimension 2 is the standard deviation of the MSD.
     %   Dimension 3 is the number of intervals used in the calculation.
-    msd = zeros(paramTemp.runs, numrec-1,3);
-    % Call the MSD computer.
-    for i=1:paramTemp.runs
-      [msdTemp,dtime] = computeMSD(xx(i,:,:), paramTemp.maxComputeMsdPnts, 0, 2);
-      msd(i,:,:) = msdTemp;
-    end
+%     msd = zeros(paramTemp.runs, numrec-1,3);
+%     % Call the MSD computer.
+%     for i=1:paramTemp.runs
+%       [msdTemp,dtime] = computeMSD(xx(i,:,:), paramTemp.maxComputeMsdPnts, 0, 2);
+%       msd(i,:,:) = msdTemp;
+%     end
     
     % take average over all msd
-    %msdAll = computeMSD(xx, paramTemp.maxComputeMsdPnts, 0, 1);
+    [msdAll,dtime] = computeMSD(xx, paramTemp.maxComputeMsdPnts, 0, 2);
     % Take the mean MSD over all runs.
-    if param.runs>1
-      meanMSD = mean(squeeze(msd(:,:,1)),1);
-      meanErr = (1/sqrt(runs))*mean(msd(:,:,2)./sqrt(msd(:,:,3)),1);
-    else
-      meanMSD = squeeze(msd(:,:,1));
-      meanErr = zeros(1,numrec);
-    end
+%     if param.runs>1
+%       meanMSD = mean(squeeze(msd(:,:,1)),1);
+%       meanErr = (1/sqrt(runs))*mean(msd(:,:,2)./sqrt(msd(:,:,3)),1);
+%     else
+%       meanMSD = squeeze(msd(:,:,1));
+%       meanErr = zeros(1,numrec);
+%     end
     % Time stuff
     dtime = deltaT * paramTemp.recsteps * dtime';
     
     % Make results structure
     results = struct();
-    results.meanMSD = meanMSD;
-    results.meanErr = meanErr;
+    results.meanMSD = msdAll(:,1)';
+    results.meanErr = msdAll(:,2)'./sqrt(msdAll(:,3)');
     results.dtime = dtime;
 %     results.msdAll = msdAll(:,1)';
 %     results.msdSigAll = msdAll(:,2)';
@@ -220,8 +220,8 @@ try
     
     % calculate D
     %Deff = findHorztlAsymp(dtime(1:end/2),meanMSD(1:end/2),meanErr(1:end/2));
-    results.Deff = meanMSD ./ ( 2*dtime );
-    results.Derr = meanErr ./ ( 2*dtime );
+    results.Deff = results.meanMSD ./ ( 2*dtime );
+    results.Derr = results.meanErr ./ ( 2*dtime );
     results.boundRecord = boundRecord;
     results.unboundRecord = unboundRecord;
     results.koffCalc = koff;

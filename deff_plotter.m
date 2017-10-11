@@ -19,7 +19,7 @@ leg{i+1} = 'Tether Model';
 xlabel('KD (uM)');
 ylabel('Deff / Dfree');
 
-lc = 500;
+lc = 100;
 xx = logspace(-3,1);
 y = (1.*(xx*1e-3).*1.*lc)./(3.*1+(xx*1e-3).*1.*lc);
 plot(xx,y,'b-');

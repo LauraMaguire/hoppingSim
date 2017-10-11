@@ -13,6 +13,10 @@ r = struct(); % initialize results structure
 
 r.d = cell(1,l); % cell array to hold Deff vectors
 r.msd = cell(1,l); % cell array to hold msd vectors
+r.derr = cell(1,l); % cell array to hold error in Deff
+r.dtime = cell(1,l); % cell array to hold time vectors
+r.msderr = cell(1,l);
+
 r.filename = cell(1,l); % cell array to hold file names
 r.dt = zeros(1,l); % for delta T parameter (size of timestep)
 r.kon = zeros(1,l); % for kon calculated after running
@@ -34,7 +38,10 @@ for k=1:l
     data=load(fname);
     r.filename{k} = fname;
     r.d{k} = data.results.Deff;
+    r.derr{k} = data.results.Derr;
     r.msd{k} = data.results.meanMSD;
+    r.dtime{k} = data.results.dtime;
+    r.msderr{k} = data.results.meanErr;
     r.dt(k) = data.paramOut.deltaT;
     r.kon(k) = data.results.konCalc;
     r.koff(k) = data.results.koffCalc;
