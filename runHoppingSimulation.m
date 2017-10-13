@@ -247,8 +247,16 @@ try
     
     % calculate D
     %Deff = findHorztlAsymp(dtime(1:end/2),meanMSD(1:end/2),meanErr(1:end/2));
-    results.Deff = meanMSD ./ ( 2*dtime );
-    results.Derr = meanErr ./ ( 2*dtime );
+    threshold = 0.1;
+    numBins = 10;
+    plotFlag = 1;
+    verbose = 1;
+    diffInfo = getDfromMsdData( results.dtime, results.meanMSD, results.msdSigAll./ sqrt( results.msdNumPtnsAll ), ...
+      threshold, numBins, plotFlag, verbose );
+    results.Deff = diffInfo.D;
+    results.Derr = diffInfo.stdD;
+    %results.Deff = meanMSD ./ ( 2*dtime );
+    %results.Derr = meanErr ./ ( 2*dtime );
     results.boundRecord = nonzeros(boundRecord);
     results.unboundRecord = nonzeros(unboundRecord);
     results.koffCalc = koff;

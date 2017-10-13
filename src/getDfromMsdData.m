@@ -60,7 +60,7 @@ if asymInfo.numAsymptotes == 0
   diffInfo.tAnom = NaN;
 else
   if verbose
-    fprintf('Asymptotes found' )
+    fprintf('Asymptotes found\n')
   end
   % calculate D from asymptote
   diffInfo.D = exp( asymInfo.aveW(end) );
