@@ -26,11 +26,11 @@ r.dPre = zeros(1,l); % for predicted Deff using koff and kon above
 r.kd = zeros(1,l); % for calculated Kd (from koff and kon above)
 r.dPost = zeros(1,l); % for Deff calculated from simulation
 r.dErr = zeros(1,l); % for error in calculated Deff
-r.db = zeros(1,l);
-r.hopFreq = zeros(1,l);
-r.hopOverageFreq = zeros(1,l); % for hopping overage frequency
+%r.db = zeros(1,l);
+r.hopFreq = zeros(l,1);
+r.hopOverageFreq = zeros(l,1); % for hopping overage frequency
 r.khop = zeros(1,l);
-r.onOverageCount = cell(1,l); % for on-rate overage count
+r.onOverageCount = cell(l,1); % for on-rate overage count
 
 r.params = cell(1,l); % for parameters needed for flux calculation
 for k=1:l
@@ -38,18 +38,19 @@ for k=1:l
     fname=d(k).name;
     data=load(fname);
     r.filename{k} = fname;
-    if length(data.results.dtime) > 10^5
-        r.dtime{k} = data.results.dtime(1:1e5);
-        r.d{k} = data.results.Deff(1:1e5);
-        r.derr{k} = data.results.Derr(1:1e5);
-        r.msd{k} = data.results.meanMSD(1:1e5);
-        r.errMean{k} = data.results.meanErr(1:1e5);
-    elseif data.paramOut.kHop > 0
-        r.dtime{k} = data.results.dtime(1:end/10);
-        r.d{k} = data.results.Deff(1:end/10);
-        r.derr{k} = data.results.Derr(1:end/10);
-        r.msd{k} = data.results.meanMSD(1:end/10);
-        r.errMean{k} = data.results.meanErr(1:end/10);
+    n = length(data.results.dtime);
+    if length(data.results.dtime) > 1e5
+        r.dtime{k} = data.results.dtime(1:n);
+        r.d{k} = data.results.Deff(1:n);
+        r.derr{k} = data.results.Derr(1:n);
+        r.msd{k} = data.results.meanMSD(1:n);
+        r.errMean{k} = data.results.meanErr(1:n);
+%     elseif data.paramOut.kHop > 0
+%         r.dtime{k} = data.results.dtime(1:end/10);
+%         r.d{k} = data.results.Deff(1:end/10);
+%         r.derr{k} = data.results.Derr(1:end/10);
+%         r.msd{k} = data.results.meanMSD(1:end/10);
+%         r.errMean{k} = data.results.meanErr(1:end/10);
     else
         r.dtime{k} = data.results.dtime;
         r.d{k} = data.results.Deff;
@@ -65,7 +66,7 @@ for k=1:l
     r.dPre(k) = data.DeffCalc;
     r.kd(k) = r.koff(k)/r.kon(k);
     %[r.dPost(k), r.dErr(k)] = estimateDeff(r.dt(k)*1:length(r.d{k}),r.d{k});
-    [diffInfo] = getDfromMsdData( r.dtime{k}, r.msd{k}, r.errMean{k}, 0.1, 15, 1 );
+    [diffInfo] = getDfromMsdData( r.dtime{k}, r.msd{k}, r.errMean{k}, 0.1, 20, 1,1 );
     r.dPost(k) = diffInfo.D;
     r.dErr(k) = diffInfo.stdD;
     
