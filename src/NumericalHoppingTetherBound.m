@@ -1,13 +1,9 @@
-function [ x, tether_locations,binding_record,hopCount,hopOverageCount, onOverage] = NumericalHoppingTether( params, plot_flag )
+function [ x, tether_locations,binding_record,hopCount,hopOverageCount, onOverage] = NumericalHoppingTetherBound( params, plot_flag )
 try
-
-if params.unbindFlag == 0
-    [ x, tether_locations,binding_record,hopCount,hopOverageCount, onOverage] = NumericalHoppingTetherBound( params, plot_flag );
-    return
-end
 % This code runs the simulation with a continuous model, taking in only
-% non-dimensional parameters.
-
+% non-dimensional parameters.  It binds after the first step and never
+% allows unbinding!
+disp('Running no-unbinding version of simulation.');
 % Import parameters.
 L = params.L;
 D = params.D;
@@ -16,7 +12,7 @@ timesteps = params.timesteps;
 
 k = params.k;
 c = params.c;
-koff = params.koff;
+koff = 0;
 kHop = params.kHop;  
 Ef = params.Ef; 
 
@@ -55,7 +51,7 @@ for i=0:timesteps-1
     % Check for binding/unbinding state changes.
     if currBind ~= 0 % enter this loop if the particle is currently bound
         binding_record(i+1)=1;
-        probOff = koff*deltaT;
+        probOff = 0;
         if randomNumber < probOff
             nextBind = 0;  % move to unbound state
         else
@@ -93,7 +89,7 @@ for i=0:timesteps-1
         DeltaG = -Ef+0.5*k*wrapdistance(currPos,tether_locations(tetherIndex),L)^2;
         % Calculate probability of binding to nearest tether:
         konCurrent = koff*length(nearbyIndices)*exp(-DeltaG);
-        onProb = konCurrent*deltaT;
+        onProb = 1;
         %if onProb > 1
             %disp('onProb greater than one');
             %disp(['konCurrent = ' num2str(konCurrent)]);

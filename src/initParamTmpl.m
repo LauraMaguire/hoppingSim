@@ -21,6 +21,7 @@ param.D = 1; % diffusion coefficient (nm^2/us)
 param.Nt = 1e3; % total Nup concentration (uM)
 
 % Parameters relating to the simulation logistics
+param.unbindFlag = 1; % allow the particle to unbind?
 param.storePos = 0; % store position flag
 param.timesteps = 10^5; % Total number of timesteps.
 param.recsteps = 10; % number of steps before recording

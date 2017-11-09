@@ -78,6 +78,7 @@ try
     timesteps = paramTemp.timesteps;
     deltaT = paramTemp.deltaT;
     numrec = paramTemp.numrec;
+    unbindFlag = paramTemp.unbindFlag;
 
     % Calculate and save remaining parameters
     k = 3/(2*lc*lp);
