@@ -22,11 +22,11 @@ Ef = params.Ef;
 % Set number of tethers:
 M = round(L*c);
 % Make a sorted list of random tethers:
-tether_locations = L*sort(rand(M,1));
+tether_locations = [L/2];
 
 % x(i,1) = position, x(i,2) is well number (0 if unbound).
 x = zeros(params.numrec,2);
-x(1,:) = [L/2 0]; % start at the center.
+x(1,:) = [L/2 1]; % start at the center.
 jrec = 1; % record index (first step gets recorded if t = 0)
 recsteps = params.recsteps;
 
