@@ -12,7 +12,7 @@ dtime = r.dtime{i}(1:f*end);
 clear i
 %%
 %koffList = [1e-4 1e-3 1e-2 1e-1];
-koffList = logspace(-4,-3);
+koffList = logspace(-4,-2);
 distList = zeros(length(koffList),length(dtime));
 for koffIndex=1:length(koffList)
     for tt=1:length(dtime)
@@ -40,7 +40,7 @@ for koffIndex = 1:length(koffList)
 end
 %%
 lc = 100;
-xx = logspace(-4,2);
+xx = koffList;
 y = (1.*(xx).*1.*lc)./(3.*1+(xx).*1.*lc);
 figure
 semilogx(xx,y,'k-');
