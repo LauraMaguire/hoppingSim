@@ -1,35 +1,6 @@
-test = results.meanMSD - 2*results.pfCalc*results.dtime;
 
-%%
-y = tr3(1:100);
-x = 1:100;
-
-%%
- p1 =      0.1939;  %(0.1936, 0.1941)
- p2 =     0.08254;  %(0.06954, 0.09553)
-
- 
-line = p1*1:10e5 + p2;
-plot(line);
-
-%%
-hold off;
-loglog(tr3);hold all; loglog(0.2*(1:1e5));
-loglog(0.2*(1:1e5).^0.95);
-
-%%
-figure;
-loglog(tr3./(2*results.dtime));
-hold on;
-loglog(tr5./(2*results.dtime));
-loglog((0.2*(1:1e6).^0.85)./(2*results.dtime));
-
-%%
-%disp('hello');
-n =2;
-w = nan(length(r.filename),n);
+%% Plots log-log of instantaneous D and adds newD entry to r
 for i=1:length(r.filename)
-    %disp('loop');
     dt = r.dtime{i}; 
     logD = r.msd{i}./(2*dt);
     errLogD = r.errMean{i}./(2*dt);
@@ -37,27 +8,12 @@ for i=1:length(r.filename)
     %loglog(dt,logD);
     hold all;
     tt = find(dt == 1e3);
-%     for j=1:n
-%         %disp(num2str(j));
-%         errtest = errLogD(tt+n/2-j);
-%         w(i,n+1-j) = 1/errtest^2;
-%     end
-%     r.newD(i) = sum(w(i,:).*logD(tt-floor(n/2):tt+floor(n/2-1)))/sum(w(i,:));
-%     r.newDerr(i) = 1/sqrt(sum(w(i,:)));
     r.newD(i) = logD(tt);
     r.newDerr(i) = errLogD(tt);
-%     r.newD(i) = mean(logD(tt-5:tt+5));
-%     r.newDerr(i) = std(logD(tt-5:tt+5))/sqrt(10-1);
-end
-% h = legend({'0.4','0.04','0.004','0'});
-% xlabel('ln(t/\mus)');
-% ylabel('ln((<x^2>/2 t)/(nm^2/\mus))');
 
-% set(get(h,'title'),'String','k_{hop} (\mus^-1)')
-% clear h
+end
 
 hold off;
-% disp('goodbye');
 
 %%
 r.ratio = r.khop./r.koff;
@@ -92,3 +48,31 @@ ylabel('ln((<x^2>/2 t)/(nm^2/\mus))');
 
 set(get(h,'title'),'String','k_{hop} (\mus^-1)')
 clear h
+%% Plot DB as a function of KD for analytic model, several tether lengths
+lp =1;
+df =1;
+lc = [10, 100, 500, 1000, 1e6];
+koff = logspace(-5,0);
+kd = 1e3*koff;
+db = zeros(length(koff),length(lc));
+for lcIndex=1:length(lc)
+    for koffIndex = 1:length(koff)
+        db(koffIndex,lcIndex) = (koff(koffIndex)*lc(lcIndex)*lp*df)/...
+            (3*df+koff(koffIndex)*lc(lcIndex)*lp);
+    end
+        
+end
+clear koffIndex lcIndex
+%%
+SetFigureDefaults(20,3);
+semilogx(kd,db);
+xlabel('$$K_D$$ ($\mu$M)');
+ylabel('$$D_B/D_F$$');
+h = legend({'10','100','500','1000','$$\infty$$'});
+xlim([1e-2 1e3]);
+ylim([0 1]);
+tx = '$$l_c$$ (nm)';
+%set(get(tx,'Interpreter'),'latex');
+set(get(h,'title'),'String',tx)
+clear h
+pbaspect([1 1 1])

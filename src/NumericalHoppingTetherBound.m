@@ -20,9 +20,10 @@ Ef = params.Ef;
 % uniform distribution.
 
 % Set number of tethers:
-M = round(L*c);
+M = round(L*c)-1;
 % Make a sorted list of random tethers:
-tether_locations = [L/2];
+%tether_locations = [L/2];
+tether_locations = L*sort([rand(M,1)' 1/2]);
 
 % x(i,1) = position, x(i,2) is well number (0 if unbound).
 x = zeros(params.numrec,2);

@@ -4,8 +4,8 @@ f = 0.9;
 khopList = [0,0.001,0.01,0.1];
 msdList = zeros(length(r.filename),f*1e5);
 for i=1:length(r.filename)
-    s = smooth(r.msd{i},1e2);
-    %s= r.msd{i};
+    %s = smooth(r.msd{i},1e2);
+    s= r.msd{i};
     msdList(i,:) = s(1:f*end);
 end
 dtime = r.dtime{i}(1:f*end);
