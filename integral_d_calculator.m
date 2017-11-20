@@ -2,7 +2,7 @@
 %%
 f = 0.9;
 lc = 100;
-khopList = [0,0.001,0.01,0.1];
+khopList = [0];%[0, 0.001,0.01,0.1];
 msdList = zeros(length(r.filename),f*1e5);
 errList = zeros(length(r.filename),f*1e5);
 for i=1:length(r.filename)

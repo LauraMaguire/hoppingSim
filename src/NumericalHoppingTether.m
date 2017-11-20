@@ -5,6 +5,11 @@ if params.unbindFlag == 0
     [ x, tether_locations,binding_record,hopCount,hopOverageCount, onOverage] = NumericalHoppingTetherBound( params, plot_flag );
     return
 end
+
+if params.bindFlag == 0
+    [ x, tether_locations,binding_record,hopCount,hopOverageCount, onOverage] = NumericalHoppingTetherNoBind( params, plot_flag );
+    return
+end
 % This code runs the simulation with a continuous model, taking in only
 % non-dimensional parameters.
 
