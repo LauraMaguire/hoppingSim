@@ -194,7 +194,7 @@ try
 %     end
     
     % take average over all msd
-    [msdAll,dtime] = computeMSD(xx, paramTemp.maxComputeMsdPnts, 0, 2);
+    [msdAll,dtime] = computeMSDFixedTimeOrigin(xx, paramTemp.maxComputeMsdPnts, 0);
     % Take the mean MSD over all runs.
 %     if param.runs>1
 %       meanMSD = mean(squeeze(msd(:,:,1)),1);

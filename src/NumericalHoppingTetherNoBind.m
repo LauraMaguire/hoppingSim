@@ -3,7 +3,7 @@ try
 % This code runs the simulation with a continuous model, taking in only
 % non-dimensional parameters.  It binds after the first step and never
 % allows unbinding!
-disp('Running no-unbinding version of simulation.');
+disp('Running no-binding version of simulation.');
 % Import parameters.
 L = params.L;
 D = params.D;
