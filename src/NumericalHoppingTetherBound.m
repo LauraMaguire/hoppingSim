@@ -26,7 +26,8 @@ tether_locations = L*sort([rand(M,1)' 1/2]);
 
 % x(i,1) = position, x(i,2) is well number (0 if unbound).
 x = zeros(params.numrec,2);
-x(1,:) = [L/2 1]; % start at the center, start bound to tether.
+startTether = find(tether_locations == L/2);
+x(1,:) = [L/2 startTether]; % start at the center, start bound to tether.
 jrec = 1; % record index (first step gets recorded if t = 0)
 recsteps = params.recsteps;
 
