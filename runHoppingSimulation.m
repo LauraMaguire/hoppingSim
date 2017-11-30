@@ -135,14 +135,16 @@ try
     hopCount = zeros(1,runs);
     hopOverageCount = zeros(1,runs);
     onOverageCount = zeros(1,runs);
-    
+    startPositions = cell(1,runs);
+    tetherLocations = cell(1,runs);
+
     parfor i=1:runs
       pause(i/100); % pause for i/100 seconds
       rng('shuffle');
       fprintf(['Trial ' num2str(ii) ', Run ' num2str(i) '. Time is now ' datestr(now) '\n']);
       %fprintf('for i = %d Rand num = %f \n', i, rand() );
       % Run hopping simulation and store results.
-      [ x, ~,br,hc,hoc,oo] = NumericalHoppingTether( paramTemp, plot_flag );
+      [ x, tl ,br,hc,hoc,oo] = NumericalHoppingTether( paramTemp, plot_flag );
       all_x_output(i,:,:) = x;
       % Create list of binding events.
       [bl,ul] = listBindingEvents(br);
@@ -152,6 +154,8 @@ try
       hopCount(i) = hc;
       hopOverageCount(i) = hoc;
       onOverageCount(i) = oo;
+      startPositions{i} = findWellCenters(x,tl,Ef,k,0.01);
+      tetherLocations{i} = tl;
     end
     
     % Process the results.
@@ -194,7 +198,7 @@ try
 %     end
     
     % take average over all msd
-    [msdAll,dtime] = computeMSDFixedTimeOrigin(xx, paramTemp.maxComputeMsdPnts, 0);
+    [msdAll,dtime] = computeMSDFixedTimeOrigin(xx, startPositions, 0);
     % Take the mean MSD over all runs.
 %     if param.runs>1
 %       meanMSD = mean(squeeze(msd(:,:,1)),1);
@@ -211,6 +215,7 @@ try
     results.meanMSD = msdAll(:,1)';
     results.meanErr = msdAll(:,2)'./sqrt(msdAll(:,3)');
     results.dtime = dtime;
+    results.tetherLocations = tetherLocations;
 %     results.msdAll = msdAll(:,1)';
 %     results.msdSigAll = msdAll(:,2)';
 %     results.msdNumPtnsAll = msdAll(:,3)';

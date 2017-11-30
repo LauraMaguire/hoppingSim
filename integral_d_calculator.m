@@ -1,10 +1,11 @@
 
 %%
+SetFigureDefaults(18,2);
 f = 0.9;
-lc = 100;
-khopList = [0];%[0, 0.001,0.01,0.1];
-msdList = zeros(length(r.filename),f*1e5);
-errList = zeros(length(r.filename),f*1e5);
+lc = 200;
+khopList = [0, 0.001,0.01,0.1];
+msdList = zeros(length(r.filename),f*1e6);
+errList = zeros(length(r.filename),f*1e6);
 for i=1:length(r.filename)
     %s = smooth(r.msd{i},1e2);
     s= r.msd{i};
@@ -16,7 +17,7 @@ dtime = r.dtime{i}(1:f*end);
 clear i
 %%
 %koffList = [1e-4 1e-3 1e-2 1e-1];
-koffList = logspace(-6,2,100);
+koffList = logspace(-3,-1,40);
 distList = zeros(length(koffList),length(dtime));
 for koffIndex=1:length(koffList)
     for tt=1:length(dtime)
@@ -58,11 +59,16 @@ y = (1.*koffList.*1.*lc)./(3.*1+koffList.*1.*lc);
 figure
 set(gca, 'XScale', 'log')
 set(gca, 'YScale', 'log')
-loglog(koffList,y,'k-');
+semilogx(koffList/1e-3,y,'k-');
 hold all
 for i=1:length(khopList)
-    errorbar(koffList,d(i,:)',derr(i,:)','o')
+    errorbar(koffList/1e-3,d(i,:)',derr(i,:)','o')
+    %loglog(koffList,d(i,:)','o');
 end
-legend({'Tether Model','0','0.004', '0.04', '0.4'})
+h = legend({'Tether Model','0','0.004', '0.04', '0.4'});
+ht = get(h,'Title');
+set(ht,'String','$k_\mathrm{hop}$ ($\mu$s$^{-1}$)')
 clear i
 hold off
+xlabel('Dissociation constant $K_D$ ($\mu$ M)');
+ylabel('Bound diffusion ratio $D_B/D_F$');

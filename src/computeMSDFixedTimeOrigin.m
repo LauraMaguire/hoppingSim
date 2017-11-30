@@ -1,4 +1,4 @@
-function [msd,dtime]=computeMSDFixedTimeOrigin(x, maxpts_msd, quadFlag)
+function [msd,dtime]=computeMSDFixedTimeOrigin(x, startPositions, quadFlag)
 %takes array x (mxdxn array), t (1xn),
 % startId = 1 use start
 % startId = 2 use rand
@@ -13,8 +13,23 @@ function [msd,dtime]=computeMSDFixedTimeOrigin(x, maxpts_msd, quadFlag)
 %  msd(:,3)=n intervals(dt)
 %  msd(:,4)=mean quartic displacement
 %  msd(:,5)=std(quartic displacement)
-
+runs = size(x,1);
 number_timepnts = size(x,3);
+newx = [];
+for run=1:runs
+    startIndex = startPositions{run};
+    for sp = 1:length(startIndex)
+        datablock = nan(1,number_timepnts);
+        truncateddata = x(run,1,startIndex(sp):end);
+        datablock(1:length(truncateddata)) = truncateddata;
+        newx = vertcat(newx, datablock);
+    end
+end
+xx=zeros(size(newx,1), 1,number_timepnts);
+for i=1:size(newx,1)
+    xx(i,1,:) = reshape( newx(i,:,1), [1 1 number_timepnts] ) ;
+end
+
 number_delta_t  = number_timepnts - 1;
 dtime= ( 1 : number_delta_t)' ;
 
@@ -26,11 +41,10 @@ end
 
 for dt = 1:number_delta_t
   try
-    % Make sure we have no otherlapping time windows
     index_start = 1;
     index_end = index_start + dt;
    
-    delta_coords = x(:,:, index_end) - x(:,:,index_start);
+    delta_coords = xx(:,:, index_end) - xx(:,:,index_start);
     % calculate displacement ^ 2
     squared_dis = sum(delta_coords.^2,2); % dx^2+dy^2+...
     % calculate displacement ^ 4 if flag
@@ -42,8 +56,8 @@ for dt = 1:number_delta_t
         mean(quartic_dis(:)); ... %average
         std(quartic_dis(:))]'; %std
     else
-      msd(dt,:) = [mean(squared_dis(:)); ... % average
-        std(squared_dis(:)); ...; % std
+      msd(dt,:) = [nanmean(squared_dis(:)); ... % average
+        nanstd(squared_dis(:)); ...; % std
         length(squared_dis(:)) ]';
     end
   catch
