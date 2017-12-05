@@ -135,14 +135,14 @@ try
     hopCount = zeros(1,runs);
     hopOverageCount = zeros(1,runs);
     onOverageCount = zeros(1,runs);
-    
+    tetherLocations = cell(1,runs);
     parfor i=1:runs
       pause(i/100); % pause for i/100 seconds
       rng('shuffle');
       fprintf(['Trial ' num2str(ii) ', Run ' num2str(i) '. Time is now ' datestr(now) '\n']);
       %fprintf('for i = %d Rand num = %f \n', i, rand() );
       % Run hopping simulation and store results.
-      [ x, ~,br,hc,hoc,oo] = NumericalHoppingTether( paramTemp, plot_flag );
+      [ x, tl,br,hc,hoc,oo] = NumericalHoppingTether( paramTemp, plot_flag );
       all_x_output(i,:,:) = x;
       % Create list of binding events.
       [bl,ul] = listBindingEvents(br);
@@ -152,6 +152,7 @@ try
       hopCount(i) = hc;
       hopOverageCount(i) = hoc;
       onOverageCount(i) = oo;
+      tetherLocations{i} = tl;
     end
     
     % Process the results.
@@ -208,6 +209,7 @@ try
     
     % Make results structure
     results = struct();
+    results.tetherLocations = tetherLocations;
     results.meanMSD = msdAll(:,1)';
     results.meanErr = msdAll(:,2)'./sqrt(msdAll(:,3)');
     results.dtime = dtime;
