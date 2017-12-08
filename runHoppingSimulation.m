@@ -278,5 +278,4 @@ try
   fprintf('Completed run: %s\n',EndTime);
 catch err
   fprintf('%s',err.getReport('extended') );
-  keyboard
 end

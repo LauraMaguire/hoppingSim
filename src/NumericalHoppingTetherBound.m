@@ -128,7 +128,6 @@ if plot_flag
 end
 catch err
   fprintf('%s',err.getReport('extended') );
-  keyboard
 end
 
 

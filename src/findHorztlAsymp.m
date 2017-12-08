@@ -6,8 +6,6 @@
 %   msd: mean square displacement
 %   msdErr: uncertainty in msd
 function [output]= findHorztlAsymp(t,msd,errMsd)
-% debug
-debugMe = 0;
 % make sure everything is right size and a column vector
 if sum( size(t) ~= size(msd) ) || sum( size(t) ~= size(errMsd) )...
     || sum( size(msd) ~= size(errMsd) ) 
@@ -221,6 +219,4 @@ output.binLength = binLength;
 output.upperBound = min(centerValyLog);
 output.yinter = yinter;
 output.countedBins= countedBins;
-if debugMe
-  keyboard
-end
+
