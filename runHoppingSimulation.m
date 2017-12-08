@@ -130,51 +130,53 @@ try
     %   Dimension 3 gives (1) the position and (2) the tether location, if
     %   bound to a tether.  If unbound, (2) is zero.
     all_x_output = zeros(runs,numrec,2);
-    boundRecord = [];
-    unboundRecord = [];
+    %boundRecord = [];
+    %unboundRecord = [];
     hopCount = zeros(1,runs);
     hopOverageCount = zeros(1,runs);
-    onOverageCount = zeros(1,runs);
+    %onOverageCount = zeros(1,runs);
     tetherLocations = cell(1,runs);
-    parfor i=1:runs
+    dist = zeros(numrec,runs);
+    for i=1:runs
       pause(i/100); % pause for i/100 seconds
       rng('shuffle');
       fprintf(['Trial ' num2str(ii) ', Run ' num2str(i) '. Time is now ' datestr(now) '\n']);
       %fprintf('for i = %d Rand num = %f \n', i, rand() );
       % Run hopping simulation and store results.
-      [ x, tl,br,hc,hoc,oo] = NumericalHoppingTether( paramTemp, plot_flag );
+      [ x, tl,~,hc,hoc,~] = NumericalHoppingTether( paramTemp, plot_flag );
       all_x_output(i,:,:) = x;
       % Create list of binding events.
-      [bl,ul] = listBindingEvents(br);
-      boundRecord = vertcat(boundRecord,bl);
-      unboundRecord = vertcat(unboundRecord,ul);
+%       [bl,ul] = listBindingEvents(br);
+%       boundRecord = vertcat(boundRecord,bl);
+%       unboundRecord = vertcat(unboundRecord,ul);
       % Add to hopping and overage counts.
       hopCount(i) = hc;
       hopOverageCount(i) = hoc;
-      onOverageCount(i) = oo;
-      tetherLocations{i} = tl;
+%       onOverageCount(i) = oo;
+       tetherLocations{i} = tl;
+       dist = distToTether(x,tl);
     end
     
     % Process the results.
     % Calculate koff (units of us^-1)
-    if length(boundRecord) > 50
-      [fit, ~] = ExpFit(boundRecord,deltaT);
-      koff = -fit.b;
-    else
-      koff = NaN;
-    end
+%     if length(boundRecord) > 50
+%       [fit, ~] = ExpFit(boundRecord,deltaT);
+%       koff = -fit.b;
+%     else
+%       koff = NaN;
+%     end
     
     % Calculate kon (units of us^-1 uM^-1)
-    if length(unboundRecord) > 50
-      [fit, ~] = ExpFit(unboundRecord,deltaT);
-      kon = -fit.b/Nt;
-    else
-      kon = NaN;
-    end
-    close all
+%     if length(unboundRecord) > 50
+%       [fit, ~] = ExpFit(unboundRecord,deltaT);
+%       kon = -fit.b/Nt;
+%     else
+%       kon = NaN;
+%     end
+%     close all
     
     % Calculate pf, fraction of time spent free
-    pf = sum(sum(unboundRecord))/sum(sum(vertcat(boundRecord, unboundRecord)));
+%     pf = sum(sum(unboundRecord))/sum(sum(vertcat(boundRecord, unboundRecord)));
     
     % Reformat the position results to calculate msd.
     %numLags = 3e4-1;
@@ -209,30 +211,33 @@ try
     
     % Make results structure
     results = struct();
+    results.dist = dist;
     results.tetherLocations = tetherLocations;
+    results.x = all_x_output;
     results.meanMSD = msdAll(:,1)';
     results.meanErr = msdAll(:,2)'./sqrt(msdAll(:,3)');
     results.dtime = dtime;
 %     results.msdAll = msdAll(:,1)';
 %     results.msdSigAll = msdAll(:,2)';
 %     results.msdNumPtnsAll = msdAll(:,3)';
-    if paramTemp.storePos
-      xx = reshape( xx, [paramTemp.runs, numrec] );
-      results.xx = xx;
-    end
+%     if paramTemp.storePos
+%       xx = reshape( xx, [paramTemp.runs, numrec] );
+%       results.xx = xx;
+%     end
     
     % calculate D
     %Deff = findHorztlAsymp(dtime(1:end/2),meanMSD(1:end/2),meanErr(1:end/2));
-    results.Deff = results.meanMSD ./ ( 2*dtime );
-    results.Derr = results.meanErr ./ ( 2*dtime );
-    results.boundRecord = boundRecord;
-    results.unboundRecord = unboundRecord;
-    results.koffCalc = koff;
-    results.konCalc = kon;
-    results.pfCalc = pf;
+%     results.Deff = results.meanMSD ./ ( 2*dtime );
+%     results.Derr = results.meanErr ./ ( 2*dtime );
+%     results.boundRecord = boundRecord;
+%     results.unboundRecord = unboundRecord;
+%     results.koffCalc = koff;
+%     results.konCalc = kon;
+%     results.pfCalc = pf;
     
     % Calcuate frequency of hopping per bound timestep
-    results.hopFreq = sum(hopCount)/sum(boundRecord);
+%    results.hopFreq = sum(hopCount)/sum(boundRecord);
+    results.hopFreq = sum(hopCount)/timesteps;
     % Calculate frequency of hop prob too high per hop
     if results.hopFreq ~= 0
       results.hopOverageFreq = mean(hopOverageCount/hopCount);
@@ -241,18 +246,18 @@ try
     end
     
     % shows number of timesteps that binding happened with onProb > 1
-    results.onOverageCount = onOverageCount;
+%     results.onOverageCount = onOverageCount;
     
     % Give some warnings about the time scales
-    if results.Deff(1) > 1.5
-      disp('Check time scale: Deff > 1.5 at t=0.');
-    elseif results.Deff(1) < 0.1
-      disp('Check time scale: Deff < 0.1 at t=0.');
-    end
+%     if results.Deff(1) > 1.5
+%       disp('Check time scale: Deff > 1.5 at t=0.');
+%     elseif results.Deff(1) < 0.1
+%       disp('Check time scale: Deff < 0.1 at t=0.');
+%     end
     
     % Save the important results in a .mat file in output directory.
     fileObj = matfile(filename,'Writable',true);
-    fileObj.DeffCalc = (pf*D)+(1-pf)*(koff*lc*lp*D)/(3*D+koff*lc*lp);
+%     fileObj.DeffCalc = (pf*D)+(1-pf)*(koff*lc*lp*D)/(3*D+koff*lc*lp);
     fileObj.paramIn = param;
     fileObj.paramOut = paramTemp;
     fileObj.results = results;
