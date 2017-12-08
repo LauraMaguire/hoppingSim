@@ -136,7 +136,7 @@ try
     hopOverageCount = zeros(1,runs);
     %onOverageCount = zeros(1,runs);
     tetherLocations = cell(1,runs);
-    dist = zeros(numrec,runs);
+    dist = zeros(runs,numrec);
     for i=1:runs
       pause(i/100); % pause for i/100 seconds
       rng('shuffle');
@@ -154,7 +154,7 @@ try
       hopOverageCount(i) = hoc;
 %       onOverageCount(i) = oo;
        tetherLocations{i} = tl;
-       dist = distToTether(x,tl);
+       dist(i,:) = distToTether(x,tl);
     end
     
     % Process the results.
@@ -190,14 +190,18 @@ try
     %   Dimension 2 is the standard deviation of the MSD.
     %   Dimension 3 is the number of intervals used in the calculation.
 %     msd = zeros(paramTemp.runs, numrec-1,3);
-%     % Call the MSD computer.
-%     for i=1:paramTemp.runs
-%       [msdTemp,dtime] = computeMSD(xx(i,:,:), paramTemp.maxComputeMsdPnts, 0, 2);
-%       msd(i,:,:) = msdTemp;
-%     end
-    
-    % take average over all msd
-    [msdAll,dtime] = computeMSDFixedTimeOrigin(xx, paramTemp.maxComputeMsdPnts, 0);
+%   
+
+     fprintf('Running msd for all runs, i.e., particles\n')
+     % Call the MSD computer.
+     distFromTethers = dist;
+     thresholdDistance = 0.2;
+     [msdAll,dtime] = computeMSDTethers(xx(:,:,:), ...
+       distFromTethers, thresholdDistance, ...
+       paramTemp.maxComputeMsdPnts);
+     fprintf('Finished msd for all runs, i.e., particles\n')
+    % take average over all msd  
+%     [msdAll,dtime] = computeMSDFixedTimeOrigin(xx, paramTemp.maxComputeMsdPnts, 0);
     % Take the mean MSD over all runs.
 %     if param.runs>1
 %       meanMSD = mean(squeeze(msd(:,:,1)),1);
