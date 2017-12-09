@@ -19,6 +19,7 @@ param.lp = 1; % Nup persistence length (nm)
 param.L = 500; % length of simulated medium in nm
 param.D = 1; % diffusion coefficient (nm^2/us)
 param.Nt = 1e3; % total Nup concentration (uM)
+param.thresholdDistance = 0.2; % distance threshold to be at center of well
 
 % Parameters relating to the simulation logistics
 param.unbindFlag = 0; % allow the particle to unbind?

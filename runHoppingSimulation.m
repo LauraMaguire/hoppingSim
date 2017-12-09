@@ -195,22 +195,10 @@ try
      fprintf('Running msd for all runs, i.e., particles\n')
      % Call the MSD computer.
      distFromTethers = dist;
-     thresholdDistance = 0.2;
      [msdAll,dtime] = computeMSDTethers(xx(:,:,:), ...
-       distFromTethers, thresholdDistance, ...
+       distFromTethers, param.thresholdDistance, ...
        paramTemp.maxComputeMsdPnts);
      fprintf('Finished msd for all runs, i.e., particles\n')
-    % take average over all msd  
-%     [msdAll,dtime] = computeMSDFixedTimeOrigin(xx, paramTemp.maxComputeMsdPnts, 0);
-    % Take the mean MSD over all runs.
-%     if param.runs>1
-%       meanMSD = mean(squeeze(msd(:,:,1)),1);
-%       meanErr = (1/sqrt(runs))*mean(msd(:,:,2)./sqrt(msd(:,:,3)),1);
-%     else
-%       meanMSD = squeeze(msd(:,:,1));
-%       meanErr = zeros(1,numrec);
-%     end
-    % Time stuff
     dtime = deltaT * paramTemp.recsteps * dtime';
     
     % Make results structure
