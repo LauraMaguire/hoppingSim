@@ -11,28 +11,28 @@ d=dir('*.mat'); % list all .mat files in current folder
 l = length(d); % count all files
 r = struct(); % initialize results structure
 
-r.d = cell(l,1); % cell array to hold Deff vectors
+%r.d = cell(l,1); % cell array to hold Deff vectors
 r.msd = cell(l,1); % cell array to hold msd vectors
-r.derr = cell(l,1); % cell array to hold error in Deff
+%r.derr = cell(l,1); % cell array to hold error in Deff
 r.dtime = cell(l,1); % cell array to hold time vectors
 r.errMean = cell(l,1);
 
 r.filename = cell(l,1); % cell array to hold file names
 r.deltat = zeros(1,l); % for delta T parameter (size of timestep)
-r.kon = zeros(1,l); % for kon calculated after running
-r.koff = zeros(1,l); % for koff calculated after running
+%r.kon = zeros(1,l); % for kon calculated after running
+%r.koff = zeros(1,l); % for koff calculated after running
 r.hopParam = zeros(1,l); % for hopping rate parameter
-r.dPre = zeros(1,l); % for predicted Deff using koff and kon above
-r.kd = zeros(1,l); % for calculated Kd (from koff and kon above)
-r.dPost = zeros(1,l); % for Deff calculated from simulation
-r.dErr = zeros(1,l); % for error in calculated Deff
+%r.dPre = zeros(1,l); % for predicted Deff using koff and kon above
+%r.kd = zeros(1,l); % for calculated Kd (from koff and kon above)
+%r.dPost = zeros(1,l); % for Deff calculated from simulation
+%r.dErr = zeros(1,l); % for error in calculated Deff
 %r.db = zeros(1,l);
 r.hopFreq = zeros(l,1);
 r.hopOverageFreq = zeros(l,1); % for hopping overage frequency
 r.khop = zeros(1,l);
-r.onOverageCount = cell(l,1); % for on-rate overage count
+%r.onOverageCount = cell(l,1); % for on-rate overage count
 
-r.params = cell(1,l); % for parameters needed for flux calculation
+%r.params = cell(1,l); % for parameters needed for flux calculation
 for k=1:l
     disp(['Loading file ' num2str(k) ' of ' num2str(l) '.']);
     fname=d(k).name;
@@ -41,8 +41,8 @@ for k=1:l
     n = length(data.results.dtime);
     if length(data.results.dtime) > 1e5
         r.dtime{k} = data.results.dtime(1:n);
-        r.d{k} = data.results.Deff(1:n);
-        r.derr{k} = data.results.Derr(1:n);
+        %r.d{k} = data.results.Deff(1:n);
+        %r.derr{k} = data.results.Derr(1:n);
         r.msd{k} = data.results.meanMSD(1:n);
         r.errMean{k} = data.results.meanErr(1:n);
 %     elseif data.paramOut.kHop > 0
@@ -53,22 +53,22 @@ for k=1:l
 %         r.errMean{k} = data.results.meanErr(1:end/10);
     else
         r.dtime{k} = data.results.dtime;
-        r.d{k} = data.results.Deff;
-        r.derr{k} = data.results.Derr;
+%        r.d{k} = data.results.Deff;
+%        r.derr{k} = data.results.Derr;
         r.msd{k} = data.results.meanMSD;
         r.errMean{k} = data.results.meanErr;
     end
     
     r.deltat(k) = data.paramOut.deltaT;
-    r.kon(k) = data.results.konCalc;
-    r.koff(k) = data.results.koffCalc;
+%    r.kon(k) = data.results.konCalc;
+ %   r.koff(k) = data.results.koffCalc;
     r.hopParam(k) = data.paramOut.kHop;
-    r.dPre(k) = data.DeffCalc;
-    r.kd(k) = r.koff(k)/r.kon(k);
+ %   r.dPre(k) = data.DeffCalc;
+%    r.kd(k) = r.koff(k)/r.kon(k);
     %[r.dPost(k), r.dErr(k)] = estimateDeff(r.dt(k)*1:length(r.d{k}),r.d{k});
-    [diffInfo] = getDfromMsdData( r.dtime{k}, r.msd{k}, r.errMean{k}, 0.1, 20, 1,1 );
-    r.dPost(k) = diffInfo.D;
-    r.dErr(k) = diffInfo.stdD;
+ %   [diffInfo] = getDfromMsdData( r.dtime{k}, r.msd{k}, r.errMean{k}, 0.1, 20, 1,1 );
+ %   r.dPost(k) = diffInfo.D;
+ %   r.dErr(k) = diffInfo.stdD;
     
     if isfield(data.results,'hopFreq')
         r.hopFreq(k) = data.results.hopFreq;
@@ -90,19 +90,19 @@ for k=1:l
     end
     
     % Extract bound diffusion coefficient from dPost.
-    r.dBound(k) = (r.dPost(k) - data.results.pfCalc*data.paramOut.D)/...
-        (1-data.results.pfCalc);
+%    r.dBound(k) = (r.dPost(k) - data.results.pfCalc*data.paramOut.D)/...
+%        (1-data.results.pfCalc);
     
     % Fill in params structure for subNum function.
-    r.params{k} = struct();
-    r.params{k}.DF = data.paramOut.D;
-    r.params{k}.Nt = data.paramOut.Nt;
-    r.params{k}.AB = 10; %shouldn't matter if I take ratios;
-    r.params{k}.L = 100; % keep fixed
-    r.params{k}.kon = r.kon(k);
-    r.params{k}.koff = r.koff(k);
-    r.params{k}.ll = data.paramOut.lc*data.paramOut.lp;
-    r.params{k}.DB = r.dBound(k);
+%     r.params{k} = struct();
+%     r.params{k}.DF = data.paramOut.D;
+%     r.params{k}.Nt = data.paramOut.Nt;
+%     r.params{k}.AB = 10; %shouldn't matter if I take ratios;
+%     r.params{k}.L = 100; % keep fixed
+%     r.params{k}.kon = r.kon(k);
+%     r.params{k}.koff = r.koff(k);
+%     r.params{k}.ll = data.paramOut.lc*data.paramOut.lp;
+%     r.params{k}.DB = r.dBound(k);
 
 end
 

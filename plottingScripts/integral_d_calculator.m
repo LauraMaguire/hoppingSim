@@ -2,10 +2,10 @@
 %%
 SetFigureDefaults(18,2);
 f = 0.9;
-lc = 200;
-khopList = [0, 0.001,0.01,0.1];
-msdList = zeros(length(r.filename),f*1e6);
-errList = zeros(length(r.filename),f*1e6);
+lc = 500;
+khopList = [0, 0.001];%,0.01,0.1];
+msdList = zeros(length(r.filename),f*1e5);
+errList = zeros(length(r.filename),f*1e5);
 for i=1:length(r.filename)
     %s = smooth(r.msd{i},1e2);
     s= r.msd{i};
@@ -17,7 +17,7 @@ dtime = r.dtime{i}(1:f*end);
 clear i
 %%
 %koffList = [1e-4 1e-3 1e-2 1e-1];
-koffList = logspace(-3,-1,40);
+koffList = logspace(-3,-1,30);
 distList = zeros(length(koffList),length(dtime));
 for koffIndex=1:length(koffList)
     for tt=1:length(dtime)
