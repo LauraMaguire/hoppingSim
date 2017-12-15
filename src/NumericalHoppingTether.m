@@ -1,13 +1,19 @@
-function [ x, tether_locations,binding_record,hopCount,hopOverageCount, onOverage] = NumericalHoppingTether( params, plot_flag )
+function [ x, tether_locations,binding_record,...
+    hopCount,hopOverageCount, onOverage] ...
+    = NumericalHoppingTether( params, plot_flag )
 try
 
 if params.unbindFlag == 0
-    [ x, tether_locations,binding_record,hopCount,hopOverageCount, onOverage] = NumericalHoppingTetherBound( params, plot_flag );
+    [ x, tether_locations,binding_record,...
+        hopCount,hopOverageCount, onOverage] ...
+        = NumericalHoppingTetherBound( params, plot_flag );
     return
 end
 
 if params.bindFlag == 0
-    [ x, tether_locations,binding_record,hopCount,hopOverageCount, onOverage] = NumericalHoppingTetherNoBind( params, plot_flag );
+    [ x, tether_locations,binding_record,...
+        hopCount,hopOverageCount, onOverage] ...
+        = NumericalHoppingTetherNoBind( params, plot_flag );
     return
 end
 % This code runs the simulation with a continuous model, taking in only
@@ -22,7 +28,7 @@ timesteps = params.timesteps;
 k = params.k;
 c = params.c;
 koff = params.koff;
-kHop = params.kHop;  
+rHop = params.rHop;  
 Ef = params.Ef; 
 
 % Make a tether vector with randomly-spaced tethers from a continuous
@@ -74,8 +80,8 @@ for i=0:timesteps-1
                 -wrapdistance(currPos,tether_locations(currBind),L)^2));
             
             % Calculate the probability of a hop.
-            kHopCurrent = kHop*length(nearbyIndices)*exp(-DeltaG/2);
-            probHop = kHopCurrent*deltaT;
+            rHopCurrent = rHop*length(nearbyIndices)*exp(-DeltaG/2);
+            probHop = rHopCurrent*deltaT;
             
             % Hop if needed, otherwise stay bound to original tether.
             if randomNumber < probOff +probHop

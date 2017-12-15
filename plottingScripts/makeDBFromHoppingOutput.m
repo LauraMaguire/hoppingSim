@@ -1,4 +1,4 @@
-function [] = makeDBFromHoppingOutput()
+function [DB,DBerr,rHopList,koffList] = makeDBFromHoppingOutput(f,koffList)
 % This scripts generates DB data using the outputs of the hopping
 % simulation.  Several parameters need to be set by hand at the top of the
 % script.  Navigate to the folder in which the output files are located
@@ -6,13 +6,17 @@ function [] = makeDBFromHoppingOutput()
 % kHop (rHop).
 %% User inputs
 SetFigureDefaults(18,2); % first argument is default font size; second argument is default line width.
-f = 0.9; % fraction of data to use.  f = 0.9 uses first 90% of data.
-lc = 500; % tether contour length in nm.
-rhopList = [0, 0.001];%,0.01,0.1]; % list of rHop values from simulations
-koffList = logspace(-3,-1,30); % list of koff values you want to use
+%f = 0.9; % fraction of data to use.  f = 0.9 uses first 90% of data.
+%lc = 500; % tether contour length in nm.
+%rhopList = [0, 0.001];%,0.01,0.1]; % list of rHop values from simulations
+%koffList = logspace(-3,-1,30); % list of koff values you want to use
 
 %% Load output files
 r = LoadResults();
+
+%% Determine contour length lc and rhop list from output files
+lc = r.lc(1);
+rHopList = unique(r.rhop);
 
 %% Set up arrays for msd and error; define a time axis
 msdList = zeros(length(r.filename),f*1e5);
@@ -44,23 +48,23 @@ clear koff tt
 % The error integrand is for calculating error in DB.
 
 % Initialize arrays
-integrand = zeros(length(rhopList),length(koffList),length(dtime));
+integrand = zeros(length(rHopList),length(koffList),length(dtime));
 ltintegrand = zeros(length(koffList),length(dtime));
-errintegrand = zeros(length(rhopList),length(koffList),length(dtime));
+errintegrand = zeros(length(rHopList),length(koffList),length(dtime));
 % Loop over all koff, rhop, and t
 for koffIndex = 1:length(koffList)
     for tt = 1:length(dtime)
         ltintegrand(koffIndex,tt) = dtime(tt)*distList(koffIndex,tt);
-        for khopIndex =1:length(rhopList)
-            integrand(khopIndex,koffIndex,tt) = ...
-                msdList(khopIndex,tt)*distList(koffIndex,tt);
-            errintegrand(khopIndex,koffIndex,tt) = ...
-                errList(khopIndex,tt)*distList(koffIndex,tt);
+        for hopIndex =1:length(rHopList)
+            integrand(hopIndex,koffIndex,tt) = ...
+                msdList(hopIndex,tt)*distList(koffIndex,tt);
+            errintegrand(hopIndex,koffIndex,tt) = ...
+                errList(hopIndex,tt)*distList(koffIndex,tt);
         end
     end
 end
 
-clear khopIndex koffIndex tt
+%clear khopIndex koffIndex tt
 
 %% Numerically integrate all integrands over time
 integral = sum(integrand,3);
@@ -71,12 +75,12 @@ err = sum(errintegrand,3);
 % In 1D, DB = integral / (2*lifetime).
 
 % Initialize arrays
-d = zeros(length(rhopList),length(koffList));
-derr = zeros(length(rhopList),length(koffList));
+DB = zeros(length(rHopList),length(koffList));
+DBerr = zeros(length(rHopList),length(koffList));
 % Loop over all values of koff
 for koffIndex = 1:length(koffList)
-    d(:,koffIndex) = integral(:,koffIndex)./(2*lifetime(koffIndex));
-    derr(:,koffIndex) = err(:,koffIndex)./(2*lifetime(koffIndex));
+    DB(:,koffIndex) = integral(:,koffIndex)./(2*lifetime(koffIndex));
+    DBerr(:,koffIndex) = err(:,koffIndex)./(2*lifetime(koffIndex));
 end
 %% Plot results
 
@@ -90,8 +94,8 @@ set(gca, 'YScale', 'log')
 % Convert x-axis from koff to KD (kon = 1e-3, diffusion-limited)
 semilogx(koffList/1e-3,y,'k-');
 hold all
-for i=1:length(rhopList)
-    errorbar(koffList/1e-3,d(i,:)',derr(i,:)','o')
+for i=1:length(rHopList)
+    errorbar(koffList/1e-3,DB(i,:)',DBerr(i,:)','o')
     %loglog(koffList,d(i,:)','o');
 end
 h = legend({'Tether Model','0','0.004', '0.04', '0.4'});

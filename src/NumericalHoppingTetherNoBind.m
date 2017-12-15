@@ -12,7 +12,7 @@ timesteps = params.timesteps;
 
 k = params.k;
 c = params.c;
-kHop = params.kHop;  
+rHop = params.rHop;  
 Ef = params.Ef; 
 
 % Make a tether vector with randomly-spaced tethers from a continuous

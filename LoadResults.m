@@ -1,109 +1,87 @@
 function r = LoadResults()
-% Loads all output .mat files from current folder.
-% Input: plotFlag - if 1, plots showing how effective diffusion coefficient
-% was calculated will remain after runnning.  If zeros, all plots will be
-% closed after running.
-% Output: a structure containing many results in an easy format for
-% plotting.  Precise data contained in results structure may change as the
-% simulation evolves.
+% LoadResults loads all hopping simulation output files in the current
+% folder.  The folder should only contain hopping output files.
 
-d=dir('*.mat'); % list all .mat files in current folder
-l = length(d); % count all files
-r = struct(); % initialize results structure
+% Input: none.
 
-%r.d = cell(l,1); % cell array to hold Deff vectors
-r.msd = cell(l,1); % cell array to hold msd vectors
-%r.derr = cell(l,1); % cell array to hold error in Deff
-r.dtime = cell(l,1); % cell array to hold time vectors
-r.errMean = cell(l,1);
+% Output: r, a structure containing the fields described below. Fields may
+% change as the simulation evolves.
 
-r.filename = cell(l,1); % cell array to hold file names
-r.deltat = zeros(1,l); % for delta T parameter (size of timestep)
-%r.kon = zeros(1,l); % for kon calculated after running
-%r.koff = zeros(1,l); % for koff calculated after running
-r.hopParam = zeros(1,l); % for hopping rate parameter
-%r.dPre = zeros(1,l); % for predicted Deff using koff and kon above
-%r.kd = zeros(1,l); % for calculated Kd (from koff and kon above)
-%r.dPost = zeros(1,l); % for Deff calculated from simulation
-%r.dErr = zeros(1,l); % for error in calculated Deff
-%r.db = zeros(1,l);
-r.hopFreq = zeros(l,1);
-r.hopOverageFreq = zeros(l,1); % for hopping overage frequency
-r.khop = zeros(1,l);
-%r.onOverageCount = cell(l,1); % for on-rate overage count
+%% Find all Matlab files in current folder; initialize r structure
 
-%r.params = cell(1,l); % for parameters needed for flux calculation
+d=dir('*.mat');
+l = length(d);
+r = struct();
+
+%% Initialize arrays
+
+% Cell arrays (to hold variable-length vectors)
+r.filename       = cell(l,1); % filenames
+r.msd            = cell(l,1); % msd vectors (nm^2)
+r.errMean        = cell(l,1); % standard error in msd (nm^2)
+r.dtime          = cell(l,1); % time axis vectors (us)
+
+% Arrays of doubles
+r.deltat         = zeros(1,l); % timestep (us)
+r.lc             = zeros(1,l); % tether contour length (nm)
+r.rhop           = zeros(1,l); % hopping rate parameter (dimensionless)
+r.hopFreq        = zeros(l,1); % frequency of hopping while bound
+r.hopOverageFreq = zeros(l,1); % frequency of hopping overage
+r.khop           = zeros(1,l); % hopping rate (hops/us while bound)
+
+%% Loop over all output files
+
 for k=1:l
+    
     disp(['Loading file ' num2str(k) ' of ' num2str(l) '.']);
-    fname=d(k).name;
-    data=load(fname);
-    r.filename{k} = fname;
-    n = length(data.results.dtime);
-    if length(data.results.dtime) > 1e5
-        r.dtime{k} = data.results.dtime(1:n);
-        %r.d{k} = data.results.Deff(1:n);
-        %r.derr{k} = data.results.Derr(1:n);
-        r.msd{k} = data.results.meanMSD(1:n);
-        r.errMean{k} = data.results.meanErr(1:n);
-%     elseif data.paramOut.kHop > 0
-%         r.dtime{k} = data.results.dtime(1:end/10);
-%         r.d{k} = data.results.Deff(1:end/10);
-%         r.derr{k} = data.results.Derr(1:end/10);
-%         r.msd{k} = data.results.meanMSD(1:end/10);
-%         r.errMean{k} = data.results.meanErr(1:end/10);
+    
+    % Load hopping simulation output and record filename.
+    fname               = d(k).name;
+    data                = load(fname);
+    r.filename{k}       = fname;
+
+    % Record time axis, MSD, and error in MSD.
+    r.dtime{k}          = data.results.dtime;
+    r.msd{k}            = data.results.meanMSD;
+    r.errMean{k}        = data.results.meanErr;
+
+    % Record experimental input parameters.
+    r.deltat(k)         = data.paramOut.deltaT;
+    
+    if isfield(data, 'paramOut.rHop')
+    r.rhop(k)           = data.paramOut.rHop;
     else
-        r.dtime{k} = data.results.dtime;
-%        r.d{k} = data.results.Deff;
-%        r.derr{k} = data.results.Derr;
-        r.msd{k} = data.results.meanMSD;
-        r.errMean{k} = data.results.meanErr;
+    r.rhop(k)           = data.paramOut.kHop;
     end
     
-    r.deltat(k) = data.paramOut.deltaT;
-%    r.kon(k) = data.results.konCalc;
- %   r.koff(k) = data.results.koffCalc;
-    r.hopParam(k) = data.paramOut.kHop;
- %   r.dPre(k) = data.DeffCalc;
-%    r.kd(k) = r.koff(k)/r.kon(k);
-    %[r.dPost(k), r.dErr(k)] = estimateDeff(r.dt(k)*1:length(r.d{k}),r.d{k});
- %   [diffInfo] = getDfromMsdData( r.dtime{k}, r.msd{k}, r.errMean{k}, 0.1, 20, 1,1 );
- %   r.dPost(k) = diffInfo.D;
- %   r.dErr(k) = diffInfo.stdD;
+    r.lc(k)             = data.paramOut.lc;
     
-    if isfield(data.results,'hopFreq')
-        r.hopFreq(k) = data.results.hopFreq;
-    else
-        r.hopFreq(k) = NaN;
+    % Record experimental outputs.
+    r.hopFreq(k)        = data.results.hopFreq;
+    r.hopOverageFreq(k) = data.results.hopOverageFreq;
+    
+    % Calculate hopping rate (hops/us while bound)
+    r.khop(k)           = r.hopFreq(k)./r.deltat(k);
+
+    % This section runs if binding AND unbinding were enabled.
+    % Additional data can be calculated in that case.
+    if (data.paramOut.bindFlag && data.paramOut.unbindFlag)
+        
+    % Initialize additional arrays
+    r.kon               = zeros(1,l); % actual kon (us^-1 uM^-1)
+    r.koff              = zeros(1,l); % actual koff (us^-1)
+    r.kd                = zeros(1,l); % actual KD (M)
+    r.onOverageCount    = cell(l,1);  % on-rate overage count
+    
+    % Fill arrays where possible
+    r.kon(k)            = data.results.konCalc;
+    r.koff(k)           = data.results.koffCalc;
+    r.kd(k)             = r.koff(k)/r.kon(k);
+    r.onOverageCount{k} = data.results.onOverageCount;
     end
-    r.khop(k) = r.hopFreq(k)./r.deltat(k);
-    
-    if isfield(data.results,'hopOverageFreq')
-        r.hopOverageFreq(k) = data.results.hopOverageFreq;
-    else
-        r.hopOverageFreq(k) = NaN;
-    end
-    
-    if isfield(data.results,'onOverageCount')
-        r.onOverageCount{k} = data.results.onOverageCount;
-    else
-        r.onOverageCount{k} = NaN;
-    end
-    
-    % Extract bound diffusion coefficient from dPost.
-%    r.dBound(k) = (r.dPost(k) - data.results.pfCalc*data.paramOut.D)/...
-%        (1-data.results.pfCalc);
-    
-    % Fill in params structure for subNum function.
-%     r.params{k} = struct();
-%     r.params{k}.DF = data.paramOut.D;
-%     r.params{k}.Nt = data.paramOut.Nt;
-%     r.params{k}.AB = 10; %shouldn't matter if I take ratios;
-%     r.params{k}.L = 100; % keep fixed
-%     r.params{k}.kon = r.kon(k);
-%     r.params{k}.koff = r.koff(k);
-%     r.params{k}.ll = data.paramOut.lc*data.paramOut.lp;
-%     r.params{k}.DB = r.dBound(k);
 
 end
+
+disp('Done loading files.');
 
 end

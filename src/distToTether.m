@@ -4,6 +4,10 @@ function [dist] = distToTether(x,tl)
 numSteps = size(x,1);
 dist = zeros(1,numSteps);
 for t=1:numSteps
-    dist(t) = abs(x(t,1)-tl(x(t,2)));
+    if x(t,2) > 0
+        dist(t) = abs(x(t,1)-tl(x(t,2)));
+    else
+        dist(t) = NaN;
+    end
 end
 end

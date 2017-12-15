@@ -7,7 +7,7 @@
 clear param
 
 % Variable nondimensional parameters
-param.kHop = [0]; % non-dim hopping parameter
+param.rHop = [0]; % non-dim hopping parameter
 
 % Variable dimensional parameters
 param.lc = [100]; % Nup contour length (nm)

@@ -12,7 +12,7 @@ timesteps = params.timesteps;
 
 k = params.k;
 c = params.c;
-kHop = params.kHop;  
+rHop = params.rHop;  
 Ef = params.Ef; 
 
 % Make a tether vector with randomly-spaced tethers from a continuous
@@ -49,7 +49,7 @@ for i=0:timesteps-1
     currPos = nextPos;
     currBind = nextBind;
     binding_record(i+1)=1;
-    if kHop >0
+    if rHop >0
         % First, pick a random nearby tether to attempt hopping to.
         nearbyIndices = findNearbyTethers(currPos,k,Ef,L,tether_locations,10);
         tetherIndex = datasample(nearbyIndices,1);
@@ -60,8 +60,8 @@ for i=0:timesteps-1
             -wrapdistance(currPos,tether_locations(currBind),L)^2));
             
         % Calculate the probability of a hop.
-        kHopCurrent = kHop*length(nearbyIndices)*exp(-DeltaG/2);
-        probHop = kHopCurrent*deltaT;
+        rHopCurrent = rHop*length(nearbyIndices)*exp(-DeltaG/2);
+        probHop = rHopCurrent*deltaT;
             
         % Hop if needed, otherwise stay bound to original tether.
         if randomNumber < probHop
