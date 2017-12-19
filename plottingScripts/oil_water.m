@@ -1,4 +1,12 @@
+function [] = makePartitionPlot()
+% This function plots the concentration profiles across a Nup-filled medium
+% for two different boundary conditions: equilibrium (in which the TF
+% concentration is equal in both reservoirs) and gradient (in which T(0) =
+% 0 and T(L) = TL).  It shows the partitioning of TF into the Nup-filled
+% medium.
 
+% There are no inputs to the function, but the system parameters need to be
+% set in the first section.
 %%
 params = struct();
 params.DF = 1;
@@ -35,3 +43,5 @@ hold off
 xlabel('Position x (nm)');
 ylabel('Concentration T(x) + C(x) ($\mu$M)');
 legend('Equilibrium', 'Transport');
+
+end
