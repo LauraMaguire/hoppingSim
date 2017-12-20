@@ -23,6 +23,7 @@ for khopIndex=1:4
 end
 
 %% Fill in values for error in nu
+if ~isempty(find(selectivity.paramLoad(:,5),1))
 for khopIndex=1:4
     % set start and finish indices based on kHop
     fin = 120 + 30*khopIndex;
@@ -33,8 +34,10 @@ for khopIndex=1:4
     % fill in selectivity data
     out.nuErrData(:,khopIndex) = DBerr./selectivity.paramLoad(start:fin,1);
 end
+end
 
 %% Fill in values for positive error in selectivity
+if ~isempty(find(selectivity.paramLoad(:,5),1))
 for khopIndex=1:4
     % set start and finish indices based on kHop
     fin = 120 + 30*khopIndex;
@@ -42,14 +45,17 @@ for khopIndex=1:4
     % fill in selectivity data
     out.selErrPlusData(:,khopIndex) = selectivity.val(start:fin);
 end
+end
 
 %% Fill in values for negative error in selectivity
+if ~isempty(find(selectivity.paramLoad(:,5),1))
 for khopIndex=1:4
     % set start and finish indices based on kHop
     fin = 240 + 30*khopIndex;
     start = fin - 29;
     % fill in selectivity data
     out.selErrMinusData(:,khopIndex) = selectivity.val(start:fin);
+end
 end
 
 end
