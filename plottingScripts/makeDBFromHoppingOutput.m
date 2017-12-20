@@ -1,4 +1,5 @@
-function [DB,DBerr,kHopList,koffList] = makeDBFromHoppingOutput(f,koffList)
+function [DB,DBerr,kHopList,koffList,DBarray] ...
+    = makeDBFromHoppingOutput(f,koffList)
 % This scripts generates DB data using the outputs of the hopping
 % simulation. Navigate to the folder in which the output files are located
 % before running.  Folder should contain output files in ascending order of
@@ -147,7 +148,7 @@ set(v,'String','$k_{off}$ ($\mu$s$^{-1}$ $\mu$M$^{-1}$)')
 %% Plot MSDs
 figure
 for i=1:length(kHopList)
-loglog(dtime,smooth(squeeze(msdList(i,:)),100));
+loglog(dtime,squeeze(msdList(i,:)));
 hold all
 end
 hold off
@@ -157,5 +158,66 @@ xlabel('Time ($\mu$s)');
 ylabel('$\rho_{MSD}(t)$ (nm$^2$)');
 v = get(l,'title');
 set(v,'String','$k_\mathrm{hop}$ ($\mu$s$^{-1}$)')
+
+%% Put results into a table that Mike will use to calculate selectivity
+
+% Make one table per dataset (i.e. one table per Lc value). ALL VALUES ARE
+% IN SI WITH NO PREFIXES.
+% Five columns:
+%   1) DF (m^2/s)
+%   2) DB (m^2/s)
+%   3) KD (M)
+%   4) khop (s^-1)
+%   5) error flag: 0 if DB value is true value, 1 if DB value is DB+DBerr,
+%   -1 if DB value is DB-DBerr (this is a system to numerically propagate
+%   error in DB into error in selectivity)
+%
+% Rows are grouped into blocks so that each large block represents one khop
+% value, and smaller sub-blocks within give DB, DB+err, and DB-err.
+%
+% Mike Stefferson has a script that calculates selectivity using the
+% resulting array.  Then he sends that result back to me and I use the
+% script makeHoppingData.m to reformat it into something easy to use.
+% Finally I send the makeHoppingData.m output back to Mike and he plots it
+% in our standard format.  It's not that efficient but it works.
+
+disp('Creating table for selectivity calculation.');
+
+% Initialize an array of the correct size.
+n = length(kHopList)*length(koffList);
+m = length(koffList);
+DBarray = zeros(n*3,5);
+
+% Set DF = 1 nm^2/us = 1e-12 m^2/s for all values.
+DBarray(:,1) = 1e-12;
+
+% Fill in DB values as well as DB +/- err values (convert to m^2/s)
+trueVal = [];
+plusErr = [];
+minuErr = [];
+for i=1:length(kHopList)
+    trueVal = horzcat(trueVal,DB(i,:));
+    plusErr = horzcat(plusErr,DB(i,:)+DBerr(i,:));
+    minuErr = horzcat(minuErr,DB(i,:)-DBerr(i,:));
+end
+DBarray(1:n,2) = 1e-12*trueVal;
+DBarray(n+1:2*n,2) = 1e-12*plusErr;
+DBarray(2*n+1:3*n,2) = 1e-12*minuErr;
+
+% Fill in KD values (convert from koff using kon = 1e-3, then convert to M)
+kdList = (koffList/1e-3)*1e-6;
+DBarray(:,3) = repmat(kdList,1,3*length(kHopList))';
+
+% Fill in error flags
+DBarray(:,5) = vertcat(zeros(n,1),ones(n,1),-1*ones(n,1))';
+
+% Fill in kHop values
+k = [];
+for i=1:length(kHopList)
+    k = vertcat(k,kHopList(i)*ones(m,1));
+end
+DBarray(:,4) = repmat(k,3,1);
+
+disp('Finished.');
 
 end
