@@ -31,6 +31,7 @@ r = LoadResults();
 
 %% Determine contour length lc and rhop list from output files
 lc = r.lc(1);
+df = r.df(1);
 kHopList = r.khop;
 
 %% Set up arrays for msd and error; define a time axis
@@ -111,7 +112,7 @@ end
 %% Plot results with errorbars.
 
 % Calculate expected results for rhop = 0:
-y = (1.*koffList.*1.*lc)./(3.*1+koffList.*1.*lc);
+y = (df.*koffList.*1.*lc)./(3.*df+koffList.*1.*lc);
 
 figure
 set(gca, 'XScale', 'log')
@@ -148,7 +149,7 @@ set(v,'String','$k_{off}$ ($\mu$s$^{-1}$ $\mu$M$^{-1}$)')
 %% Plot MSDs
 figure
 for i=1:length(kHopList)
-loglog(dtime,squeeze(msdList(i,:)));
+loglog(dtime(1:4.8e4),squeeze(msdList(i,(1:4.8e4))));
 hold all
 end
 hold off
@@ -188,8 +189,8 @@ n = length(kHopList)*length(koffList);
 m = length(koffList);
 DBarray = zeros(n*3,5);
 
-% Set DF = 1 nm^2/us = 1e-12 m^2/s for all values.
-DBarray(:,1) = 1e-12;
+% Set DF (in m^2/s) for all values.
+DBarray(:,1) = df*1e-12;
 
 % Fill in DB values as well as DB +/- err values (convert to m^2/s)
 trueVal = [];

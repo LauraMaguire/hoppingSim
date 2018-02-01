@@ -24,6 +24,7 @@ r.dtime          = cell(l,1); % time axis vectors (us)
 % Arrays of doubles
 r.deltat         = zeros(1,l); % timestep (us)
 r.lc             = zeros(1,l); % tether contour length (nm)
+r.df             = zeros(1,l); % free diffusion constant (nm^2/us)
 r.rhop           = zeros(1,l); % hopping rate parameter (dimensionless)
 r.hopFreq        = zeros(l,1); % frequency of hopping while bound
 r.hopOverageFreq = zeros(l,1); % frequency of hopping overage
@@ -55,6 +56,7 @@ for k=1:l
     end
     
     r.lc(k)             = data.paramOut.lc;
+    r.df(k)             = data.paramOut.D;
     
     % Record experimental outputs.
     r.hopFreq(k)        = data.results.hopFreq;
