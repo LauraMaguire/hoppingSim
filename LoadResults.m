@@ -49,11 +49,12 @@ for k=1:l
     % Record experimental input parameters.
     r.deltat(k)         = data.paramOut.deltaT;
     
-    if isfield(data, 'paramOut.rHop')
-    r.rhop(k)           = data.paramOut.rHop;
-    else
-    r.rhop(k)           = data.paramOut.kHop;
-    end
+r.rhop(k)           = data.paramOut.rHop;
+%     if isfield(data, 'paramOut.rHop')
+%     r.rhop(k)           = data.paramOut.rHop;
+%     else
+%     r.rhop(k)           = data.paramOut.kHop;
+%     end
     
     r.lc(k)             = data.paramOut.lc;
     r.df(k)             = data.paramOut.D;
