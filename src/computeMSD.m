@@ -62,6 +62,7 @@ for dt = 1:number_delta_t
         std(squared_dis(:)); ...; % std
         length(squared_dis(:)) ]';
     end
-catch err
-  fprintf('%s\n',err.getReport('extended') );
+    catch err
+    fprintf('%s\n',err.getReport('extended') );
+  end
 end  
