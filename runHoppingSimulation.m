@@ -80,6 +80,7 @@ try
     numrec        = paramTemp.numrec;
     unbindFlag    = paramTemp.unbindFlag;
     bindFlag      = paramTemp.bindFlag;
+    springForceFlag = paramTemp.springForceFlag;
 
     % Calculate and save remaining parameters
     k             = 3/(2*lc*lp);

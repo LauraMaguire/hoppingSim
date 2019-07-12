@@ -4,6 +4,9 @@ try
 % non-dimensional parameters.  It binds after the first step and never
 % allows unbinding!
 disp('Running no-unbinding version of simulation.');
+if params.springForceFlag ==0
+    disp('Ignoring spring force in position updates.');
+end
 % Import parameters.
 L = params.L;
 D = params.D;
@@ -89,8 +92,12 @@ for i=0:timesteps-1
     
     % find displacement from center of well
     dispFromCenter = wrapdisplacement(currPos,tether_locations(nextBind),L);
-    % incorporate a term based on spring force.
-    nextPos = currPos-D*k*dispFromCenter*deltaT + step;
+    % incorporate a term based on spring force if springForceFlag is on.
+    if params.springForceFlag ==1
+        nextPos = currPos-D*k*dispFromCenter*deltaT + step;
+    else
+        nextPos = currPos + step;
+    end
 
     % recording
     if mod(i, recsteps) == 0 

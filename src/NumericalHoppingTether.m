@@ -19,6 +19,10 @@ end
 % This code runs the simulation with a continuous model, taking in only
 % non-dimensional parameters.
 
+if params.springForceFlag ==0
+    disp('Ignoring spring force in position updates.');
+end
+
 % Import parameters.
 L = params.L;
 D = params.D;
@@ -138,8 +142,12 @@ for i=0:timesteps-1
         % find displacement from center of well
         dispFromCenter = wrapdisplacement(currPos,tether_locations(nextBind),L);
         %dispFromCenter = 0; % remove after debugging!
-        % incorporate a term based on spring force.
-        nextPos = currPos-D*k*dispFromCenter*deltaT + step;
+        % incorporate a term based on spring force if springForceFlag is on.
+        if params.springForceFlag ==1
+            nextPos = currPos-D*k*dispFromCenter*deltaT + step;
+        else
+            nextPos = currPos + step;
+        end
     end
 
     % recording

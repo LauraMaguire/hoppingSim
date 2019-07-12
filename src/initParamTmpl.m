@@ -24,6 +24,7 @@ param.thresholdDistance = 0.2; % distance threshold to be at center of well
 % Parameters relating to the simulation logistics
 param.unbindFlag = 0; % allow the particle to unbind?
 param.bindFlag = 1; % allow the particle to bind?
+param.springForceFlag = 1; % use spring force when updating particle position
 param.storePos = 1; % store position flag
 param.timesteps = 10^5; % Total number of timesteps.
 param.recsteps = 10; % number of steps before recording
