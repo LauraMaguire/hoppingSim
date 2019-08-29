@@ -1,5 +1,5 @@
 function [DB,DBerr,kHopList,koffList,DBarray] ...
-    = makeDBFromHoppingOutput(f,koffList)
+    = makeDBFromHoppingOutput(f,koffList, plotFlag)
 % This scripts generates DB data using the outputs of the hopping
 % simulation. Navigate to the folder in which the output files are located
 % before running.  Folder should contain output files in ascending order of
@@ -110,7 +110,7 @@ for koffIndex = 1:length(koffList)
     DBerr(:,koffIndex) = err(:,koffIndex)./(2*lifetime(koffIndex));
 end
 %% Plot results with errorbars.
-
+if plotFlag
 % Calculate expected results for rhop = 0:
 y = (df.*koffList.*1.*lc)./(3.*df+koffList.*1.*lc);
 
@@ -131,8 +131,10 @@ ht = get(h,'Title');
 set(ht,'String','$k_\mathrm{hop}$ ($\mu$s$^{-1}$)')
 xlabel('Dissociation constant $K_D$ ($\mu$ M)');
 ylabel('Bound diffusion ratio $D_B/D_F$');
+end
 
 %% Plot integrands
+if plotFlag
 figure
 plot(dtime,squeeze(integrand(1,1,:)));
 hold all
@@ -145,8 +147,10 @@ xlabel('Time ($\mu$s)');
 ylabel('$\rho_{MSD}(t)$ (nm$^2$)');
 v = get(l,'title');
 set(v,'String','$k_{off}$ ($\mu$s$^{-1}$ $\mu$M$^{-1}$)')
+end
 
 %% Plot MSDs
+if plotFlag
 figure
 for i=1:length(kHopList)
 loglog(dtime(1:4.8e4),squeeze(msdList(i,(1:4.8e4))));
@@ -159,6 +163,7 @@ xlabel('Time ($\mu$s)');
 ylabel('$\rho_{MSD}(t)$ (nm$^2$)');
 v = get(l,'title');
 set(v,'String','$k_\mathrm{hop}$ ($\mu$s$^{-1}$)')
+end
 
 %% Put results into a table that Mike will use to calculate selectivity
 
